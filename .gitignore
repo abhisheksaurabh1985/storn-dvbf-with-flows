@@ -1,0 +1,14 @@
+# Python
+*.pyc
+*.jpg
+*.png
+
+# Ignore data directory
+tf_logs/
+pickled_data/
+output/
+output_models/
+.idea/
+
+# Ignore miscellaneous files
+junk.txt

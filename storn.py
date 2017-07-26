@@ -127,6 +127,7 @@ class STORN(object):
             self.b_hsigma = tf.Variable(initial_value=self.init_bhsigma, name="b_hsigma", dtype=tf.float32)
 
             if self.nf_planar:
+                print "self.nf_planar in encoder_rnn", self.nf_planar
                 with tf.variable_scope("encoder_nf_planar"):
                     self.W_us = tf.Variable(initial_value=self.init_w_us, name="W_us", dtype=tf.float32)
                     self.b_us = tf.Variable(initial_value=self.init_b_us, name="b_us", dtype=tf.float32)

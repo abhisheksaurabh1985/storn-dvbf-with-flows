@@ -1,10 +1,14 @@
 from storn import STORN
 from flows import *
-from dataset import *  # Needed despite using the pickled files!
-import utilities
-import train
-import helper_functions
 import plots
+from data_source.dataset import Datasets, Dataset
+
+# from dataset import *  # Needed despite using the pickled files!
+import nn_utilities
+import train
+# import helper_functions
+# import plots
+import losses
 
 import os
 import pickle
@@ -27,17 +31,24 @@ learned_reward = True  # is the reward handled as observation?
 n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
-mb_size = 5
+mb_size = 3
 learning_rate = 0.001
-training_epochs = 5
+training_epochs = 30
 display_step = 1
 model_path = "./output_models/model.ckpt"  # Manually create the directory
 logs_path = './tf_logs/'
 
-# Flow parameters
+# Select flow type. Either one of nf_planar or nf_radial can be true. Both false implies no flow has been applied.
 nf_planar = False
+nf_radial = False
+
+# Flow parameters
 numFlows = 3  # Number of times flow has to be applied.
-apply_invertibility_condition = True
+apply_invertibility_condition = False
+beta = True
+
+# Reconstruction error function. Choose either mse_reconstruction_loss or cross_entropy_loss.
+reconstruction_error_function = losses.loss_functions.mse_reconstruction_loss
 
 # DATASET
 XU = pickle.load(open('./pickled_data/XU.pkl', "rb"))
@@ -46,7 +57,7 @@ datasets = pickle.load(open('./pickled_data/datasets.pkl', "rb"))
 
 # ENCODER
 X_dim = datasets.train.full_data.shape[2]  # Input data dimension
-_X, z = utilities.inputs(X_dim, n_latent_dim, n_timesteps)
+_X, z = nn_utilities.inputs(X_dim, n_latent_dim, n_timesteps)
 nne = STORN(X_dim, n_timesteps, HU_enc, HU_dec, n_latent_dim, mb_size, learning_rate, nf_planar, numFlows)
 z_mu, z_logvar, flow_params = nne.encoder_rnn(_X)  # Shape:(T,B,z_dim)
 z_var = tf.exp(z_logvar)
@@ -62,22 +73,22 @@ if nf_planar:
     currentClass = NormalizingPlanarFlow.NormalizingPlanarFlow(z0, n_latent_dim)
 
     def apply_planar_flow(previous_output, current_input):
-        z_k, sum_logdet_jacobian = previous_output
-        print "z_k shape inside apply_planar_flow:", z_k.get_shape()
-        print "sum_logdet_jacobian shape inside apply_planar_flow:", sum_logdet_jacobian.get_shape()
-        z0, us, ws, bs = current_input
-        flow_params = (us, ws, bs)
-        print "z0 shape inside apply_planar_flow function:", z0.get_shape()
-        z_k, sum_logdet_jacobian = currentClass.planar_flow(z0, flow_params, numFlows, n_latent_dim,
-                                                            apply_invertibility_condition)
-        print "z_k shape:", z_k.get_shape()
-        print "sum_logdet_jacobian shape:", sum_logdet_jacobian.get_shape()
-        return z_k, sum_logdet_jacobian
+        _z_k, _logdet_jacobian = previous_output
+        print "z_k shape inside apply_planar_flow:", _z_k.get_shape()
+        print "_logdet_jacobian shape inside apply_planar_flow:", _logdet_jacobian.get_shape()
+        _z0, _us, _ws, _bs = current_input
+        _flow_params = (_us, _ws, _bs)
+        print "z0 shape inside apply_planar_flow function:", _z0.get_shape()
+        _z_k, _logdet_jacobian = currentClass.planar_flow(_z0, _flow_params, numFlows, n_latent_dim,
+                                                          apply_invertibility_condition)
+        print "z_k shape:", _z_k.get_shape()
+        print "_logdet_jacobian shape:", _logdet_jacobian.get_shape()
+        return _z_k, _logdet_jacobian
 
 
     # Initialize z_k and sum_logdet_jacobian
     z_k_init = tf.zeros(shape=[tf.shape(z0)[1], tf.shape(z0)[2]], dtype=tf.float32, name="z_k_initial")
-    sum_logdet_jacobian_init = tf.zeros(shape=[tf.shape(z0)[1], ], dtype=tf.float32, name="sum_logdet_jacobian_initial")
+    _logdet_jacobian_init = tf.zeros(shape=[tf.shape(z0)[1], ], dtype=tf.float32, name="initial_logdet_jacobian")
 
     # The flow_params tuple had to be decomposed into us, ws and bs so as to make it compatible with tf.scan. Note that
     # this process is reversed inside the apply_flow function.
@@ -89,12 +100,14 @@ if nf_planar:
     ws = flow_params[1]
     bs = flow_params[2]
 
-    z_k, sum_logdet_jacobian = tf.scan(apply_planar_flow, (z0, us, ws, bs),
-                                       initializer=(z_k_init, sum_logdet_jacobian_init),
-                                       name="apply_flow")
+    z_k, _logdet_jacobian = tf.scan(apply_planar_flow, (z0, us, ws, bs),
+                                    initializer=(z_k_init, _logdet_jacobian_init),
+                                    name="apply_flow")
 
     print "z_k shape in execute.py line 96ish:", z_k.get_shape()
-    print "sum_logdet_jacobian shape in execute.py line 97ish:", sum_logdet_jacobian.get_shape()
+    print "_logdet_jacobian shape in execute.py line 97ish:", _logdet_jacobian.get_shape()
+    print "_logdet_jacobian", _logdet_jacobian
+    sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
 else:
     z_k = z0
 
@@ -102,9 +115,18 @@ else:
 x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
 
 # LOSS
-# loss_op = utilities.vanilla_vae_loss(_X, x_recons, z_mu, z_var)
-loss_op, summary_losses = utilities.mse_vanilla_vae_loss(_X, x_recons, z_mu, z_var)
-solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
+if nf_planar:
+    global_step = tf.Variable(0, trainable=False)
+    loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
+                                                              reconstruction_error_function, z_mu=z_mu, z_var=z_var,
+                                                              z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian)
+    # The second element of the loss_op tuple is the elbo loss.
+    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2],
+                                                            global_step=global_step)
+else:
+    # loss_op = nn_utilities.vanilla_vae_loss(_X, x_recons, z_mu, z_var)
+    loss_op, summary_losses = losses.loss_functions.mse_vanilla_vae_loss(_X, x_recons, z_mu, z_var)
+    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
 
 # Initializing the TensorFlow variables
 init = tf.global_variables_initializer()
@@ -130,8 +152,12 @@ file_writer = tf.summary.FileWriter(logs_path + "/" + str(int(time.time())),
                                     graph=sess.graph)
 
 # TRAINING
-average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
-                           display_step, _X, datasets, merged_summary_op, file_writer)
+if nf_planar:
+    average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
+                                  display_step, _X, datasets, merged_summary_op, file_writer)
+else:
+    average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
+                               display_step, _X, datasets, merged_summary_op, file_writer)
 
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)
@@ -146,21 +172,23 @@ print "x_reconstructed shape", x_reconstructed.shape
 
 # PLOTS
 # Prepare data for plotting
-cos_actual = helper_functions.sliceFrom3DTensor(x_sample, 0)
-sine_actual = helper_functions.sliceFrom3DTensor(x_sample, 1)
-w_actual = helper_functions.sliceFrom3DTensor(x_sample, 2)  # Angular velocity omega
-reward_actual = helper_functions.sliceFrom3DTensor(x_sample, 3)
+cos_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 0)
+sine_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 1)
+w_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 2)  # Angular velocity omega
+reward_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 3)
 
-cos_recons = helper_functions.sliceFrom3DTensor(x_reconstructed, 0)
-sine_recons = helper_functions.sliceFrom3DTensor(x_reconstructed, 1)
-w_recons = helper_functions.sliceFrom3DTensor(x_reconstructed, 2)  # Angular velocity omega
-reward_recons = helper_functions.sliceFrom3DTensor(x_reconstructed, 3)
+cos_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 0)
+sine_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 1)
+w_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 2)  # Angular velocity omega
+reward_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 3)
 
 # Plot cosine: actual, reconstruction and generative sampling
 time_steps = range(n_timesteps)
 actual_signals = [cos_actual, sine_actual, w_actual, reward_actual]
 recons_signals = [cos_recons, sine_recons, w_recons, reward_recons]
 
-plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals)
+plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals)
 
 sess.close()
+
+

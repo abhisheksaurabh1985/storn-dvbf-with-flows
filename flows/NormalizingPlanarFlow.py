@@ -50,6 +50,7 @@ class NormalizingPlanarFlow(object):
                     u_hat = u + tf.multiply(tf.transpose((muw - uw)), w) / tf.norm(w, axis=[-2, -1])
                     print "u_hat shape", u_hat.get_shape()
                     # print "norm_w shape", tf.norm(w, axis=[-2, -1]).get_shape()
+                else:
                     u_hat = u
                 print "u_hat shape", u_hat.get_shape()
                 print "tf.cast(z, tf.float32) shape", tf.cast(z, tf.float32).get_shape()
@@ -65,7 +66,8 @@ class NormalizingPlanarFlow(object):
                 # psi= tf.reduce_sum(tf.matmul(tf.transpose(1-self.tanh(zwb)**2), self.w))
                 psi_u = tf.reduce_sum(tf.matmul(u_hat, psi, transpose_b=True),
                                       axis=1, keep_dims=True)
-                # psi_u= tf.matmul(tf.transpose(u_hat), tf.transpose(psi)) # Second term in equation 12. u_transpose*psi_z
+                # psi_u= tf.matmul(tf.transpose(u_hat), tf.transpose(psi))
+                # Second term in equation 12. u_transpose*psi_z
                 logdet_jacobian = tf.log(tf.clip_by_value(tf.abs(1 + psi_u), 1e-4, 1e7))  # Equation 12
                 # print "f_z shape", f_z.get_shape()
                 log_detjs.append(logdet_jacobian)

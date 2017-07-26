@@ -32,3 +32,34 @@ def plot_signals_and_reconstructions(time_steps, actual, recons):
     f.tight_layout()
     f.savefig("./output/actual_reconstructed_signals.png")
     plt.show()
+
+
+def plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss):
+    """
+    Plots reconstruction, kl and elbo loss for STORN/ DVBF with flow.
+    """
+    # Three subplots with a shared x-axis
+    f, axarr = plt.subplots(3, sharex=True)
+    f.suptitle("Average Reconstruction, KL and ELBO loss", fontsize="x-large")
+
+    range_epochs = range(nepochs)
+
+    axarr[0].plot(range_epochs, avg_recons_loss)
+    axarr[0].set_title("Average Reconstruction Loss")
+    axarr[0].set_xlabel("Number of epochs")
+    axarr[0].set_ylabel("Average Reconstruction Loss")
+
+    axarr[1].plot(range_epochs, avg_kl_loss)
+    axarr[1].set_title("Average KL Loss")
+    axarr[1].set_xlabel("Number of epochs")
+    axarr[1].set_ylabel("Average KL Loss")
+
+    axarr[2].plot(range_epochs, avg_elbo_loss)
+    axarr[2].set_title("Average ELBO Loss")
+    axarr[2].set_xlabel("Number of epochs")
+    axarr[2].set_ylabel("Average Reconstruction Loss")
+
+
+    f.tight_layout()
+    f.savefig("./output/losses.png")
+    plt.show()

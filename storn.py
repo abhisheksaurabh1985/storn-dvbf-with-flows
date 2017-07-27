@@ -1,9 +1,11 @@
+import nn_utilities
+
 import tensorflow as tf
 
 
 class STORN(object):
     def __init__(self, data_dim, time_steps, n_hidden_units_enc, n_hidden_units_dec, n_latent_dim, batch_size,
-                 learning_rate=0.001, nf_planar=None, num_flows=None, mu_init=0, sigma_init=0.01):
+                 learning_rate=0.001, flow_type="None", num_flows=None, mu_init=0, sigma_init=0.0001):
         self.data_dim = data_dim
         self.time_steps = time_steps
         self.n_hidden_units_enc = n_hidden_units_enc
@@ -13,57 +15,82 @@ class STORN(object):
         self.batch_size = batch_size
         self.mu_init = mu_init
         self.sigma_init = sigma_init
-        self.nf_planar = nf_planar  # Boolean for planar normalizing flows
-        self.num_flows = num_flows  # Number of times flow has will be applied
+        self.flow_type = flow_type
+        # self.nf_planar = nf_planar  # Boolean for planar normalizing flows
+        self.num_flows = num_flows  # Number of times flow will be applied
 
         # Initializers for encoder parameters
-        self.init_wxhe = tf.random_normal((self.n_hidden_units_enc, self.data_dim),
-                                          mean=self.mu_init,
-                                          stddev=self.sigma_init)
-        self.init_whhe = tf.random_normal((self.n_hidden_units_enc, self.n_hidden_units_enc),
-                                          mean=self.mu_init,
-                                          stddev=self.sigma_init)
-        self.init_bhe = tf.zeros((self.n_hidden_units_enc, 1))
-        self.init_whmu = tf.random_normal((self.n_latent_dim, self.n_hidden_units_enc),
-                                          mean=self.mu_init,
-                                          stddev=self.sigma_init)
-        self.init_bhmu = tf.zeros(self.n_latent_dim, 1)
-        self.init_whsigma = tf.random_normal((self.n_latent_dim, self.n_hidden_units_enc),
-                                             mean=self.mu_init,
-                                             stddev=self.sigma_init)
-        self.init_bhsigma = tf.zeros(self.n_latent_dim, 1)
+        self.init_wxhe = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                       self.data_dim,
+                                                                       self.mu_init, self.sigma_init)
+        self.init_whhe = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                       self.n_hidden_units_enc,
+                                                                       self.mu_init, self.sigma_init)
+        self.init_bhe = nn_utilities.initialize_bias_with_zeros(self.n_hidden_units_enc)
+        self.init_whmu = nn_utilities.initialize_weights_random_normal(self.n_latent_dim,
+                                                                       self.n_hidden_units_enc,
+                                                                       self.mu_init, self.sigma_init)
+        self.init_bhmu = nn_utilities.initialize_bias_with_zeros(self.n_latent_dim)
+        self.init_whsigma = nn_utilities.initialize_weights_random_normal(self.n_latent_dim,
+                                                                          self.n_hidden_units_enc,
+                                                                          self.mu_init,
+                                                                          self.sigma_init)
+        self.init_bhsigma = nn_utilities.initialize_bias_with_zeros(self.n_latent_dim)
 
         # Initializers for the decoder parameters
-        self.init_dec_wzh = tf.random_normal((self.n_hidden_units_dec, self.n_latent_dim),
-                                             mean=self.mu_init,
-                                             stddev=self.sigma_init)
-        self.init_dec_bzh = tf.zeros((self.n_hidden_units_dec, 1))
-        self.init_dec_whhd = tf.random_normal((self.n_hidden_units_dec, self.n_hidden_units_dec),
-                                              mean=self.mu_init,
-                                              stddev=self.sigma_init)
-        self.init_dec_wxhd = tf.random_normal((self.n_hidden_units_dec, self.data_dim),
-                                              mean=self.mu_init,
-                                              stddev=self.sigma_init)
-        self.init_dec_bhd = tf.zeros((self.n_hidden_units_dec, 1))
-        self.init_dec_whx = tf.random_normal((self.data_dim, self.n_hidden_units_dec),
-                                             mean=self.mu_init,
-                                             stddev=self.sigma_init)
-        self.init_dec_bhx = tf.zeros((self.data_dim, 1))
+        self.init_dec_wzh = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_dec,
+                                                                          self.n_latent_dim,
+                                                                          self.mu_init,
+                                                                          self.sigma_init)
+        self.init_dec_bzh = nn_utilities.initialize_bias_with_zeros(self.n_hidden_units_dec)
+        self.init_dec_whhd = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_dec,
+                                                                           self.n_hidden_units_dec,
+                                                                           self.mu_init,
+                                                                           self.sigma_init)
+        self.init_dec_wxhd = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_dec, self.data_dim,
+                                                                           self.mu_init,
+                                                                           self.sigma_init)
+        self.init_dec_bhd = nn_utilities.initialize_bias_with_zeros(self.n_hidden_units_dec)
+        self.init_dec_whx = nn_utilities.initialize_weights_random_normal(self.data_dim, self.n_hidden_units_dec,
+                                                                          self.mu_init,
+                                                                          self.sigma_init)
+        self.init_dec_bhx = nn_utilities.initialize_bias_with_zeros(self.data_dim)
 
         # Initializers for planar normalizing flow parameters in the encoder
-        if self.nf_planar:
-            self.init_w_us = tf.random_normal((self.n_hidden_units_enc, self.num_flows * self.n_latent_dim),
-                                              mean=self.mu_init,
-                                              stddev=self.sigma_init)
-            self.init_b_us = tf.zeros((self.num_flows * self.n_latent_dim, 1))
-            self.init_w_ws = tf.random_normal((self.n_hidden_units_enc, self.num_flows * self.n_latent_dim),
-                                              mean=self.mu_init,
-                                              stddev=self.sigma_init)
-            self.init_b_ws = tf.zeros((self.num_flows * self.n_latent_dim, 1))
-            self.init_w_bs = tf.random_normal((self.n_hidden_units_enc, self.num_flows * self.n_latent_dim),
-                                              mean=self.mu_init,
-                                              stddev=self.sigma_init)
-            self.init_b_bs = tf.zeros((self.num_flows * self.n_latent_dim, 1))
+        if self.flow_type == "Planar":
+            self.init_w_us = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                           self.num_flows * self.n_latent_dim,
+                                                                           self.mu_init,
+                                                                           self.sigma_init)
+            self.init_b_us = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.n_latent_dim)
+            self.init_w_ws = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                           self.num_flows * self.n_latent_dim,
+                                                                           self.mu_init,
+                                                                           self.sigma_init)
+            self.init_b_ws = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.n_latent_dim)
+            self.init_w_bs = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                           self.num_flows * self.n_latent_dim,
+                                                                           self.mu_init,
+                                                                           self.sigma_init)
+            self.init_b_bs = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.n_latent_dim)
+
+        # Initializers for radial normalizing flow parameters in the encoder
+        if self.flow_type == "Radial":
+            self.init_w_z0s = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                            self.num_flows * self.n_latent_dim,
+                                                                            self.mu_init,
+                                                                            self.sigma_init)
+            self.init_b_z0s = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.n_latent_dim)
+            self.init_w_alphas = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                               self.num_flows,
+                                                                               self.mu_init,
+                                                                               self.sigma_init)
+            self.init_b_alphas = nn_utilities.initialize_bias_with_zeros(self.num_flows)
+            self.init_w_betas = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                              self.num_flows,
+                                                                              self.mu_init,
+                                                                              self.sigma_init)
+            self.init_b_betas = nn_utilities.initialize_bias_with_zeros(self.num_flows)
 
     def encoding_step(self, h_t, x_t):
         """
@@ -126,8 +153,8 @@ class STORN(object):
             self.W_hsigma = tf.Variable(initial_value=self.init_whsigma, name="W_hsigma", dtype=tf.float32)
             self.b_hsigma = tf.Variable(initial_value=self.init_bhsigma, name="b_hsigma", dtype=tf.float32)
 
-            if self.nf_planar:
-                print "self.nf_planar in encoder_rnn", self.nf_planar
+            if self.flow_type == "Planar":
+                print "self.flow_type in encoder_rnn", self.flow_type
                 with tf.variable_scope("encoder_nf_planar"):
                     self.W_us = tf.Variable(initial_value=self.init_w_us, name="W_us", dtype=tf.float32)
                     self.b_us = tf.Variable(initial_value=self.init_b_us, name="b_us", dtype=tf.float32)
@@ -135,6 +162,15 @@ class STORN(object):
                     self.b_ws = tf.Variable(initial_value=self.init_b_ws, name="b_ws", dtype=tf.float32)
                     self.W_bs = tf.Variable(initial_value=self.init_w_bs, name="W_bs", dtype=tf.float32)
                     self.b_bs = tf.Variable(initial_value=self.init_b_bs, name="b_bs", dtype=tf.float32)
+            elif self.flow_type == "Radial":
+                print "self.flow_type in encoder_rnn", self.flow_type
+                with tf.variable_scope("encoder_nf_radial"):
+                    self.W_z0s = tf.Variable(initial_value=self.init_w_z0s, name="W_z0s", dtype=tf.float32)
+                    self.b_z0s = tf.Variable(initial_value=self.init_b_z0s, name="b_z0s", dtype=tf.float32)
+                    self.W_alphas = tf.Variable(initial_value=self.init_w_alphas, name="W_alphas", dtype=tf.float32)
+                    self.b_alphas = tf.Variable(initial_value=self.init_b_alphas, name="b_alphas", dtype=tf.float32)
+                    self.W_betas = tf.Variable(initial_value=self.init_w_betas, name="W_betas", dtype=tf.float32)
+                    self.b_betas = tf.Variable(initial_value=self.init_b_betas, name="b_betas", dtype=tf.float32)
 
             # Number of time steps
             states_0 = tf.zeros([tf.shape(x)[1], self.n_hidden_units_enc], tf.float32, name="enc_states_0")
@@ -150,7 +186,7 @@ class STORN(object):
             print "W_hmu shape", self.W_hmu.get_shape()
             print "b_hmu shape", self.b_hmu.get_shape()
 
-            if self.nf_planar:
+            if self.flow_type == "Planar":
                 # Parameters of the distribution
                 self.mu_encoder = tf.tensordot(self.W_hmu, _states, axes=[[1], [1]], name="mu_encoder")
                 print "mu_encoder shape", self.mu_encoder.get_shape()  # Shape:(z_dim, timeSteps*miniBatchSize)
@@ -193,7 +229,51 @@ class STORN(object):
                                      name="reshaped_planar_nf_bs")  # Shape:(timeSteps, miniBatchSize, z_dim)
 
                 planar_flow_params = (self.us, self.ws, self.bs)
-            else:
+                return self.mu_encoder, self.log_sigma_encoder, planar_flow_params
+            elif self.flow_type == "Radial":
+                # Parameters of the distribution
+                self.mu_encoder = tf.tensordot(self.W_hmu, _states, axes=[[1], [1]], name="mu_encoder")
+                print "mu_encoder shape", self.mu_encoder.get_shape()  # Shape:(z_dim, timeSteps*miniBatchSize)
+                self.mu_encoder = tf.reshape(tf.transpose(self.mu_encoder),
+                                             (self.time_steps, self.batch_size, -1),
+                                             name="reshaped_mu_encoder")  # Shape:(timeSteps, miniBatchSize, z_dim)
+                print "mu_encoder 3D shape", self.mu_encoder.get_shape()
+
+                print "self.W_hsigma shape inside encoder rnn:", self.W_hsigma.get_shape()
+                print "_states shape inside encoder rnn:", _states.get_shape()
+                self.log_sigma_encoder = tf.tensordot(self.W_hsigma, _states,
+                                                      axes=[[1], [1]],
+                                                      name="log_sigma_encoder")  # Shape:(z_dim,timeSteps*miniBatchSize)
+                print "########"
+                print "log_sigma_encoder shape", self.log_sigma_encoder.get_shape()
+                print "########"
+                self.log_sigma_encoder = tf.reshape(tf.transpose(self.log_sigma_encoder),
+                                                    (self.time_steps, self.batch_size, -1),
+                                                    name="reshaped_log_sigma_encoder")  # Shape:(timeSteps,miniBatchSize,z_dim)
+                print "########"
+                print "log_sigma_encoder shape", self.log_sigma_encoder.get_shape()
+                print "########"
+
+                # Radial normalizing flow parameters
+                print "self.W_z0s in encoder rnn:", self.W_z0s.get_shape()
+                print "_states in encoder rnn:", _states.get_shape()
+                self.z0s = tf.tensordot(self.W_z0s, _states, axes=[[0], [1]], name="radial_nf_z0s")
+                self.z0s = tf.reshape(tf.transpose(self.z0s),
+                                      (self.time_steps, self.batch_size, -1),
+                                      name="reshaped_radial_nf_z0s")  # Shape:(timeSteps, miniBatchSize, z_dim)
+
+                self.alphas = tf.tensordot(self.W_alphas, _states, axes=[[0], [1]], name="radial_nf_alphas")
+                self.alphas = tf.reshape(tf.transpose(self.alphas),
+                                         (self.time_steps, self.batch_size, -1),
+                                         name="reshaped_radial_nf_alphas")  # Shape:(timeSteps, miniBatchSize, z_dim)
+
+                self.betas = tf.tensordot(self.W_betas, _states, axes=[[0], [1]], name="radial_nf_betas")
+                self.betas = tf.reshape(tf.transpose(self.betas),
+                                        (self.time_steps, self.batch_size, -1),
+                                        name="reshaped_radial_nf_betas")  # Shape:(timeSteps, miniBatchSize, z_dim)
+                radial_flow_params = (self.z0s, self.alphas, self.betas)
+                return self.mu_encoder, self.log_sigma_encoder, radial_flow_params
+            elif self.flow_type == "None":
                 # Parameters of the distribution
                 self.mu_encoder = tf.tensordot(self.W_hmu, _states, axes=[[1], [1]], name="mu_encoder")
                 print "mu_encoder shape", self.mu_encoder.get_shape()  # Shape:(z_dim, timeSteps*miniBatchSize)
@@ -213,8 +293,8 @@ class STORN(object):
                 print "########"
                 print "log_sigma_encoder shape", self.log_sigma_encoder.get_shape()
                 print "########"
-                planar_flow_params = None
-        return self.mu_encoder, self.log_sigma_encoder, planar_flow_params
+                flow_params = None
+                return self.mu_encoder, self.log_sigma_encoder, flow_params
 
     def decoding_step(self, previous_output, z_t):
         """

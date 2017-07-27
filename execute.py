@@ -32,19 +32,20 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 3
-learning_rate = 0.001
-training_epochs = 30
+learning_rate = 0.0001
+training_epochs = 100
 display_step = 1
 model_path = "./output_models/model.ckpt"  # Manually create the directory
 logs_path = './tf_logs/'
 
-# Select flow type. Either one of nf_planar or nf_radial can be true. Both false implies no flow has been applied.
-nf_planar = False
-nf_radial = False
+# Select flow type.
+flow_type = "Planar"  # "Planar", "Radial", "None"
+# nf_planar = True
+# nf_radial = False
 
 # Flow parameters
-numFlows = 3  # Number of times flow has to be applied.
-apply_invertibility_condition = False
+numFlows = 4  # Number of times flow has to be applied.
+apply_invertibility_condition = True
 beta = True
 
 # Reconstruction error function. Choose either mse_reconstruction_loss or cross_entropy_loss.
@@ -58,7 +59,7 @@ datasets = pickle.load(open('./pickled_data/datasets.pkl', "rb"))
 # ENCODER
 X_dim = datasets.train.full_data.shape[2]  # Input data dimension
 _X, z = nn_utilities.inputs(X_dim, n_latent_dim, n_timesteps)
-nne = STORN(X_dim, n_timesteps, HU_enc, HU_dec, n_latent_dim, mb_size, learning_rate, nf_planar, numFlows)
+nne = STORN(X_dim, n_timesteps, HU_enc, HU_dec, n_latent_dim, mb_size, learning_rate, flow_type, numFlows)
 z_mu, z_logvar, flow_params = nne.encoder_rnn(_X)  # Shape:(T,B,z_dim)
 z_var = tf.exp(z_logvar)
 
@@ -69,7 +70,10 @@ z0 = nne.reparametrize_z(z_mu, z_var)
 print "z0 shape in execute.py:", z0.get_shape()
 print "z0[0,:,:] shape in execute.py:", z0[0, :, :].get_shape()
 
-if nf_planar:
+################
+# PLANAR FLOW
+################
+if flow_type == "Planar":
     currentClass = NormalizingPlanarFlow.NormalizingPlanarFlow(z0, n_latent_dim)
 
     def apply_planar_flow(previous_output, current_input):
@@ -111,11 +115,53 @@ if nf_planar:
 else:
     z_k = z0
 
+#############
+# RADIAL FLOW
+#############
+if flow_type == "Radial":
+    currentClass = NormalizingRadialFlow.NormalizingRadialFlow(z0, n_latent_dim)
+
+    def apply_radial_flow(previous_output, current_input):
+        _z_k, _logdet_jacobian = previous_output
+        print "z_k shape inside apply_radial_flow:", _z_k.get_shape()
+        print "_logdet_jacobian shape inside apply_radial_flow:", _logdet_jacobian.get_shape()
+        _z0, _z0s, _alphas, _betas = current_input
+        _flow_params = (_z0s, _alphas, _betas)
+        print "z0 shape inside apply_planar_flow function:", _z0.get_shape()
+        _z_k, _logdet_jacobian = currentClass.radial_flow(_z0, _flow_params, numFlows, n_latent_dim,
+                                                          apply_invertibility_condition)
+        print "z_k shape:", _z_k.get_shape()
+        print "_logdet_jacobian shape:", _logdet_jacobian.get_shape()
+        return _z_k, _logdet_jacobian
+
+
+    # Initialize z_k and sum_logdet_jacobian
+    z_k_init = tf.zeros(shape=[tf.shape(z0)[1], tf.shape(z0)[2]], dtype=tf.float32, name="z_k_initial")
+    _logdet_jacobian_init = tf.zeros(shape=[tf.shape(z0)[1], ], dtype=tf.float32, name="initial_logdet_jacobian")
+
+    # The flow_params tuple had to be decomposed into us, ws and bs so as to make it compatible with tf.scan. Note that
+    # this process is reversed inside the apply_flow function.
+    print "flow_params[0]", flow_params[0].get_shape()
+    print "flow_params[1]", flow_params[1].get_shape()
+    print "flow_params[2]", flow_params[2].get_shape()
+
+    z0s = flow_params[0]
+    alphas = flow_params[1]
+    betas = flow_params[2]
+
+    z_k, _logdet_jacobian = tf.scan(apply_radial_flow, (z0, z0s, alphas, betas),
+                                    initializer=(z_k_init, _logdet_jacobian_init),
+                                    name="apply_flow")
+    sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
+else:
+    z_k = z0
+
+
 # DECODER
 x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
 
 # LOSS
-if nf_planar:
+if flow_type == "Planar":
     global_step = tf.Variable(0, trainable=False)
     loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
                                                               reconstruction_error_function, z_mu=z_mu, z_var=z_var,
@@ -123,7 +169,15 @@ if nf_planar:
     # The second element of the loss_op tuple is the elbo loss.
     solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2],
                                                             global_step=global_step)
-else:
+elif flow_type == "Radial":
+    global_step = tf.Variable(0, trainable=False)
+    loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
+                                                              reconstruction_error_function, z_mu=z_mu, z_var=z_var,
+                                                              z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian)
+    # The second element of the loss_op tuple is the elbo loss.
+    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2],
+                                                            global_step=global_step)
+elif flow_type == "None":
     # loss_op = nn_utilities.vanilla_vae_loss(_X, x_recons, z_mu, z_var)
     loss_op, summary_losses = losses.loss_functions.mse_vanilla_vae_loss(_X, x_recons, z_mu, z_var)
     solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
@@ -152,10 +206,13 @@ file_writer = tf.summary.FileWriter(logs_path + "/" + str(int(time.time())),
                                     graph=sess.graph)
 
 # TRAINING
-if nf_planar:
+if flow_type == "Planar":
     average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
                                   display_step, _X, datasets, merged_summary_op, file_writer)
-else:
+elif flow_type == "Radial":
+    average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
+                                  display_step, _X, datasets, merged_summary_op, file_writer)
+elif flow_type == "None":
     average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
                                display_step, _X, datasets, merged_summary_op, file_writer)
 

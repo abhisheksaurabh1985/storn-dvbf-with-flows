@@ -26,7 +26,6 @@ class NormalizingRadialFlow(object):
 
     def radial_flow(self, z, flow_params, num_flows, n_latent_dim, invert_condition=True):
         z0s, alphas, betas = flow_params
-
         print "z0s shape:", z0s.get_shape()
         print "alphas shape:", alphas.get_shape()
         print "betas shape:", betas.get_shape()
@@ -43,8 +42,8 @@ class NormalizingRadialFlow(object):
                 print "alpha shape", alpha.get_shape()
                 print "beta shape", beta.get_shape()
                 if invert_condition:
-                    m_of_beta = self.softplus(
-                        beta)  # m(x)= log(1 + exp(x)) where x= w'*u. Last equation in A.2 Radial Flows.
+                    # m(x)= log(1 + exp(x)) where x= w'*u. Last equation in A.2 Radial Flows.
+                    m_of_beta = self.softplus(beta)
                     print "m_of_beta", m_of_beta.get_shape()
                     print "alpha", alpha.get_shape()
                     beta_hat = -alpha + m_of_beta  # It's a scalar.
@@ -91,7 +90,7 @@ class NormalizingRadialFlow(object):
                 log_detjs.append(tf.expand_dims(logdet_jacobian, 1))
                 logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
 
-                sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian)
+                sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian, axis=0)
                 print "sum log det shape", sum_logdet_jacobian.get_shape()
                 print "z shape", z.get_shape()
         return z, sum_logdet_jacobian

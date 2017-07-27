@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 
 
@@ -28,5 +27,11 @@ def inputs(D, Z, time_steps):
     return X, z
 
 
+def initialize_weights_random_normal(dim1, dim2, mu, sigma):
+    return tf.random_normal((dim1, dim2), mean=mu, stddev=sigma)
+
+
+def initialize_bias_with_zeros(dim):
+    return tf.zeros((dim, 1))
 
 

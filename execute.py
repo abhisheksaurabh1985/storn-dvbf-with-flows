@@ -13,9 +13,12 @@ import losses
 import os
 import pickle
 import time
+import json
+import collections
 
 import tensorflow as tf
 from tensorflow.python.framework import ops
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # To build TF from source. Supposed to speed up the execution by 4-8x.
 
 ops.reset_default_graph()
@@ -31,15 +34,15 @@ learned_reward = True  # is the reward handled as observation?
 n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
-mb_size = 3
+mb_size = 100
 learning_rate = 0.0001
-training_epochs = 100
+training_epochs = 3
 display_step = 1
 model_path = "./output_models/model.ckpt"  # Manually create the directory
 logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Planar"  # "Planar", "Radial", "None"
+flow_type = "NoFlow"  # "Planar", "Radial", "NoFlow"
 # nf_planar = True
 # nf_radial = False
 
@@ -48,8 +51,40 @@ numFlows = 4  # Number of times flow has to be applied.
 apply_invertibility_condition = True
 beta = True
 
+# Plot parameters
+points_to_plot = [0, 2, 4, 6, 8, 10]  # Points in the mini batches which are to be reconstructed and plotted
+
+# Set up output directory
+if flow_type == "Planar":
+    output_dir = "./output/planar/"
+elif flow_type == "Radial":
+    output_dir = "./output/radial/"
+elif flow_type == "NoFlow":
+    output_dir = "./output/no_flow/"
+
 # Reconstruction error function. Choose either mse_reconstruction_loss or cross_entropy_loss.
 reconstruction_error_function = losses.loss_functions.mse_reconstruction_loss
+
+# Store the parameters in a dictionary
+parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
+                                      ('learned_reward', learned_reward), ('n_latent_dim', n_latent_dim),
+                                      ('HU_enc', HU_enc), ('HU_dec', HU_dec), ('mb_size', mb_size),
+                                      ('learning_rate', learning_rate), ('training_epochs', training_epochs),
+                                      ('display_steps', display_step), ('model_path', model_path),
+                                      ('logs_path', logs_path), ('flow_type', flow_type), ('numFlows', numFlows),
+                                      ('apply_invertibility_conditions', apply_invertibility_condition),
+                                      ('beta', beta), ('output_dir', output_dir),
+                                      ('reconstruction_error_function', str(reconstruction_error_function))])
+
+# Write hyper-parameters with time-stamp in a file. Also write the same time stamp in the logfile.log
+experiment_start_time = time.strftime("%c")
+with open(os.path.join(output_dir, "parameters.log"), "a") as f:
+    f.write("Experiment start time:" + experiment_start_time + "\n")
+    f.write(json.dumps(parameters, indent=4))
+    f.write("\n")
+
+with open(os.path.join(output_dir, "logfile.log"), "a") as f:
+    f.write("\n" + "Experiment start time:" + experiment_start_time + "\n\n")
 
 # DATASET
 XU = pickle.load(open('./pickled_data/XU.pkl', "rb"))
@@ -75,6 +110,7 @@ print "z0[0,:,:] shape in execute.py:", z0[0, :, :].get_shape()
 ################
 if flow_type == "Planar":
     currentClass = NormalizingPlanarFlow.NormalizingPlanarFlow(z0, n_latent_dim)
+
 
     def apply_planar_flow(previous_output, current_input):
         _z_k, _logdet_jacobian = previous_output
@@ -121,6 +157,7 @@ else:
 if flow_type == "Radial":
     currentClass = NormalizingRadialFlow.NormalizingRadialFlow(z0, n_latent_dim)
 
+
     def apply_radial_flow(previous_output, current_input):
         _z_k, _logdet_jacobian = previous_output
         print "z_k shape inside apply_radial_flow:", _z_k.get_shape()
@@ -156,7 +193,6 @@ if flow_type == "Radial":
 else:
     z_k = z0
 
-
 # DECODER
 x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
 
@@ -177,7 +213,7 @@ elif flow_type == "Radial":
     # The second element of the loss_op tuple is the elbo loss.
     solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2],
                                                             global_step=global_step)
-elif flow_type == "None":
+elif flow_type == "NoFlow":
     # loss_op = nn_utilities.vanilla_vae_loss(_X, x_recons, z_mu, z_var)
     loss_op, summary_losses = losses.loss_functions.mse_vanilla_vae_loss(_X, x_recons, z_mu, z_var)
     solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
@@ -208,13 +244,13 @@ file_writer = tf.summary.FileWriter(logs_path + "/" + str(int(time.time())),
 # TRAINING
 if flow_type == "Planar":
     average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
-                                  display_step, _X, datasets, merged_summary_op, file_writer)
+                                  display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
 elif flow_type == "Radial":
     average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
-                                  display_step, _X, datasets, merged_summary_op, file_writer)
-elif flow_type == "None":
+                                  display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+elif flow_type == "NoFlow":
     average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
-                               display_step, _X, datasets, merged_summary_op, file_writer)
+                               display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
 
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)
@@ -233,19 +269,20 @@ cos_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 0)
 sine_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 1)
 w_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 2)  # Angular velocity omega
 reward_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 3)
+print cos_actual.shape, sine_actual.shape, w_actual.shape, reward_actual.shape
 
 cos_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 0)
 sine_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 1)
 w_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 2)  # Angular velocity omega
 reward_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 3)
+print cos_recons.shape, sine_recons.shape, w_recons.shape, reward_recons.shape
 
 # Plot cosine: actual, reconstruction and generative sampling
 time_steps = range(n_timesteps)
 actual_signals = [cos_actual, sine_actual, w_actual, reward_actual]
 recons_signals = [cos_recons, sine_recons, w_recons, reward_recons]
 
-plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals)
+plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals, flow_type, output_dir,
+                                             points_to_plot)
 
 sess.close()
-
-

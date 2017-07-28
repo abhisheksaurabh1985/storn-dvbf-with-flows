@@ -1,16 +1,20 @@
+import os
 import time
-import plots
+import numpy as np
 from matplotlib import pyplot as plt
+
+import plots
 
 
 def train_nf(sess, loss_op, solver, nepochs, n_samples, batch_size,
-             display_step, _X, data, summary=None, file_writer=None):
+             display_step, _X, data, summary=None, file_writer=None, flow_type=None, output_dir=None):
     """
     Training for planar normalizing flows
     """
     avg_recons_loss, avg_kl_loss, avg_elbo_loss = [], [], []
     start_time = time.time()
-    print "###### Training starts ######"
+    print "########## Training Starts ##########"
+
     for epoch in range(nepochs):
         avg_recons_loss_per_epoch = avg_kl_loss_per_epoch = avg_elbo_loss_per_epoch = 0
         total_batch = int(n_samples / batch_size)
@@ -40,13 +44,13 @@ def train_nf(sess, loss_op, solver, nepochs, n_samples, batch_size,
             print "type avg_recons_loss[epoch]", type(float(avg_recons_loss[epoch]))
             print "type avg_kl_loss[epoch]", type(float(avg_kl_loss[epoch]))
             print "type avg_elbo_loss[epoch]", type(float(avg_elbo_loss[epoch]))
-            line = "Epoch: %i \t Average recons loss: %0.9f \t Average kl loss: %0.9f \t Average elbo loss: %0.9f" % \
+            line = "Epoch: %i \t Average recons loss: %0.2f \t Average kl loss: %0.2f \t Average elbo loss: %0.2f" % \
                    (epoch,
-                    float(avg_recons_loss[epoch]),
-                    float(avg_kl_loss[epoch]),
-                    float(avg_elbo_loss[epoch]))
+                    float(np.round(avg_recons_loss[epoch], 2)),
+                    float(np.round(avg_kl_loss[epoch], 2)),
+                    float(np.round(avg_elbo_loss[epoch], 2)))
             print line
-            with open("./output/logfile.log", "a") as f:
+            with open(os.path.join(output_dir, "logfile.log"), "a") as f:
                 f.write(line + "\n")
     print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -56,18 +60,19 @@ def train_nf(sess, loss_op, solver, nepochs, n_samples, batch_size,
     print "len range(nepochs)", len(range(nepochs))
 
     # Plot losses per epoch
-    plots.plots.plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss)
+    plots.plots.plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flow_type, output_dir)
     return avg_elbo_loss
 
 
 def train(sess, loss_op, solver, nepochs, n_samples, batch_size,
-          display_step, _X, data, summary=None, file_writer=None):
+          display_step, _X, data, summary=None, file_writer=None, flow_type=None, output_dir=None):
     """
     Training for vanilla STORN/ DVBF
     """
     avg_vae_loss = []
     start_time = time.time()
     print "###### Training starts ######"
+
     for epoch in range(nepochs):
         avg_cost = 0
         total_batch = int(n_samples / batch_size)
@@ -81,11 +86,15 @@ def train(sess, loss_op, solver, nepochs, n_samples, batch_size,
         if epoch % display_step == 0:
             line = "Epoch: %i \t Average cost: %0.9f" % (epoch, avg_vae_loss[epoch])
             print line
-            with open("./output/logfile.log", "a") as f:
+            with open(os.path.join(output_dir, "logfile.log"), "a") as f:
                 f.write(line + "\n")
     print("--- %s seconds ---" % (time.time() - start_time))
     # Plot training loss per epoch
-    # plt.plot(range(nepochs), avg_vae_loss)
+    plt.plot(range(nepochs), avg_vae_loss)
+    plt.title("Average loss")
+    plt.xlabel("Number of Epochs")
+    plt.ylabel("Average Loss")
+    plt.savefig(os.path.join(output_dir, flow_type + "_" + "losses.png"))
     # plt.show()
     return avg_vae_loss
 

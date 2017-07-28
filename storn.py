@@ -5,7 +5,7 @@ import tensorflow as tf
 
 class STORN(object):
     def __init__(self, data_dim, time_steps, n_hidden_units_enc, n_hidden_units_dec, n_latent_dim, batch_size,
-                 learning_rate=0.001, flow_type="None", num_flows=None, mu_init=0, sigma_init=0.0001):
+                 learning_rate=0.001, flow_type="NoFlow", num_flows=None, mu_init=0, sigma_init=0.0001):
         self.data_dim = data_dim
         self.time_steps = time_steps
         self.n_hidden_units_enc = n_hidden_units_enc
@@ -273,7 +273,7 @@ class STORN(object):
                                         name="reshaped_radial_nf_betas")  # Shape:(timeSteps, miniBatchSize, z_dim)
                 radial_flow_params = (self.z0s, self.alphas, self.betas)
                 return self.mu_encoder, self.log_sigma_encoder, radial_flow_params
-            elif self.flow_type == "None":
+            elif self.flow_type == "NoFlow":
                 # Parameters of the distribution
                 self.mu_encoder = tf.tensordot(self.W_hmu, _states, axes=[[1], [1]], name="mu_encoder")
                 print "mu_encoder shape", self.mu_encoder.get_shape()  # Shape:(z_dim, timeSteps*miniBatchSize)

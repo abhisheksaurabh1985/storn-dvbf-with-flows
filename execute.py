@@ -35,11 +35,11 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 100
-learning_rate = 0.0001
-training_epochs = 3
+learning_rate = 0.1
+training_epochs = 100
 display_step = 1
-model_path = "./output_models/model.ckpt"  # Manually create the directory
-logs_path = './tf_logs/'
+# model_path = "./output_models/model.ckpt"  # Manually create the directory
+# logs_path = './tf_logs/'
 
 # Select flow type.
 flow_type = "NoFlow"  # "Planar", "Radial", "NoFlow"
@@ -65,16 +65,28 @@ elif flow_type == "NoFlow":
 # Reconstruction error function. Choose either mse_reconstruction_loss or cross_entropy_loss.
 reconstruction_error_function = losses.loss_functions.mse_reconstruction_loss
 
+# Set up output model directory
+if flow_type == "Planar":
+    models_dir = "./output_models/planar/"
+elif flow_type == "Radial":
+    models_dir = "./output_models/radial/"
+elif flow_type == "NoFlow":
+    models_dir = "./output_models/no_flow/"
+
+# Set up tf_logs directory
+if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow":
+    logs_path = './tf_logs/'
+
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
                                       ('learned_reward', learned_reward), ('n_latent_dim', n_latent_dim),
                                       ('HU_enc', HU_enc), ('HU_dec', HU_dec), ('mb_size', mb_size),
                                       ('learning_rate', learning_rate), ('training_epochs', training_epochs),
-                                      ('display_steps', display_step), ('model_path', model_path),
-                                      ('logs_path', logs_path), ('flow_type', flow_type), ('numFlows', numFlows),
+                                      ('display_steps', display_step), ('flow_type', flow_type), ('numFlows', numFlows),
                                       ('apply_invertibility_conditions', apply_invertibility_condition),
                                       ('beta', beta), ('output_dir', output_dir),
-                                      ('reconstruction_error_function', str(reconstruction_error_function))])
+                                      ('reconstruction_error_function', str(reconstruction_error_function)),
+                                      ('models_dir', models_dir), ('logs_path', logs_path)])
 
 # Write hyper-parameters with time-stamp in a file. Also write the same time stamp in the logfile.log
 experiment_start_time = time.strftime("%c")
@@ -203,31 +215,34 @@ if flow_type == "Planar":
                                                               reconstruction_error_function, z_mu=z_mu, z_var=z_var,
                                                               z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian)
     # The second element of the loss_op tuple is the elbo loss.
-    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2],
-                                                            global_step=global_step)
+    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 elif flow_type == "Radial":
     global_step = tf.Variable(0, trainable=False)
     loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
                                                               reconstruction_error_function, z_mu=z_mu, z_var=z_var,
                                                               z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian)
     # The second element of the loss_op tuple is the elbo loss.
-    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2],
-                                                            global_step=global_step)
+    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 elif flow_type == "NoFlow":
+    global_step = tf.Variable(0, trainable=False)
     # loss_op = nn_utilities.vanilla_vae_loss(_X, x_recons, z_mu, z_var)
-    loss_op, summary_losses = losses.loss_functions.mse_vanilla_vae_loss(_X, x_recons, z_mu, z_var)
-    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
+    # loss_op, summary_losses = losses.loss_functions.mse_vanilla_vae_loss(_X, x_recons, z_mu, z_var)
+    # solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
+    loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, z_mu=z_mu, z_var=z_var)
+    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 
 # Initializing the TensorFlow variables
 init = tf.global_variables_initializer()
 
-# 'Saver' op to save and restore all the variables
-saver = tf.train.Saver()
-
 sess = tf.InteractiveSession()
-# sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+# sess = tf_debug.LocalCLIDebugWrapperSession(sess)  # Use if debugging the graph is needed.
 sess.run(init)
 # sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
+
+# Save the tensorflow model. Keep only 4 latest models. keep_checkpoint_every_n_hours can be used to save a model after
+# every n hours.
+saver = tf.train.Saver(max_to_keep=4)
+saver.save(sess, os.path.join(models_dir, 'model.ckpt'))
 
 # Summary to monitor cost tensor
 # tf.summary.scalar("loss_op", loss_op)
@@ -249,8 +264,11 @@ elif flow_type == "Radial":
     average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
                                   display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
 elif flow_type == "NoFlow":
-    average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
-                               display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+    # average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
+    #                            display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+    average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
+                                  display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+
 
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)

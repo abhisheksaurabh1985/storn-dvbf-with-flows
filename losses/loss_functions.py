@@ -30,21 +30,23 @@ def gaussian_log_pdf(z, mu, var):
             loc=mu, scale_diag=tf.maximum(tf.sqrt(var), 1e-4)).log_prob(z + 1e-4)
 
 
-def elbo_loss(actual, prediction, beta, global_step, recons_error_func=mse_reconstruction_loss, **kwargs):
+def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainable=False),
+              recons_error_func=mse_reconstruction_loss, **kwargs):
     mu = kwargs['z_mu']
     _var = kwargs['z_var']
 
     if 'logdet_jacobian' not in kwargs:
-        kl_loss = kl_divergence_gaussian(mu, _var)
-        recons_loss = recons_error_func(prediction, actual)
+        recons_loss = tf.reduce_sum((actual - prediction) ** 2, name="reconstruction_loss")
+        kl_loss = -0.5 * tf.reduce_sum(1 + tf.log(1e-6 + _var) - tf.square(mu) - _var,
+                                       axis=None, name="kl_loss")
         _elbo_loss = tf.reduce_mean(recons_loss + kl_loss, name="elbo_loss")
 
-        # Summary
-        # tf.summary.scalar("reconstruction_loss", reconstr_loss)
-        # tf.summary.scalar("latent_loss", latent_loss)
+        # Summary of losses
+        tf.summary.scalar("reconstruction_loss", recons_loss)
+        tf.summary.scalar("latent_loss", kl_loss)
         tf.summary.scalar("elbo_loss", _elbo_loss)
         merged_summary_losses = tf.summary.merge_all()
-        return _elbo_loss, merged_summary_losses
+        return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses
     else:
         z0 = kwargs['z0']
         zk = kwargs['zk']

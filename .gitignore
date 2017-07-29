@@ -8,6 +8,7 @@ tf_logs/
 pickled_data/
 output/
 output_models/
+results_worth_saving/
 .idea/
 
 # Ignore miscellaneous files

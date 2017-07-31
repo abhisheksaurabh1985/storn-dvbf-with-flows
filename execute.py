@@ -13,6 +13,7 @@ import losses
 import os
 import pickle
 import time
+import datetime
 import json
 import collections
 
@@ -36,13 +37,13 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 100
 learning_rate = 0.1
-training_epochs = 100
+training_epochs = 500
 display_step = 1
 # model_path = "./output_models/model.ckpt"  # Manually create the directory
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "NoFlow"  # "Planar", "Radial", "NoFlow"
+flow_type = "Planar"  # "Planar", "Radial", "NoFlow"
 # nf_planar = True
 # nf_radial = False
 
@@ -61,6 +62,11 @@ elif flow_type == "Radial":
     output_dir = "./output/radial/"
 elif flow_type == "NoFlow":
     output_dir = "./output/no_flow/"
+
+experiment_start_time = datetime.datetime.now()
+output_dir = os.path.join(output_dir, experiment_start_time.strftime('%Y_%m_%d_%H_%M_%S'))
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 # Reconstruction error function. Choose either mse_reconstruction_loss or cross_entropy_loss.
 reconstruction_error_function = losses.loss_functions.mse_reconstruction_loss
@@ -89,14 +95,14 @@ parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', 
                                       ('models_dir', models_dir), ('logs_path', logs_path)])
 
 # Write hyper-parameters with time-stamp in a file. Also write the same time stamp in the logfile.log
-experiment_start_time = time.strftime("%c")
+# experiment_start_time = time.strftime("%c")
 with open(os.path.join(output_dir, "parameters.log"), "a") as f:
-    f.write("Experiment start time:" + experiment_start_time + "\n")
+    f.write("Experiment start time:" + experiment_start_time.strftime('%d %b %Y %H:%M:%S') + "\n")
     f.write(json.dumps(parameters, indent=4))
     f.write("\n")
 
 with open(os.path.join(output_dir, "logfile.log"), "a") as f:
-    f.write("\n" + "Experiment start time:" + experiment_start_time + "\n\n")
+    f.write("\n" + "Experiment start time:" + experiment_start_time.strftime('%d %b %Y %H:%M:%S') + "\n\n")
 
 # DATASET
 XU = pickle.load(open('./pickled_data/XU.pkl', "rb"))
@@ -244,9 +250,6 @@ sess.run(init)
 saver = tf.train.Saver(max_to_keep=4)
 saver.save(sess, os.path.join(models_dir, 'model.ckpt'))
 
-# Summary to monitor cost tensor
-# tf.summary.scalar("loss_op", loss_op)
-
 # Create summary to visualise weights
 # for var in tf.trainable_variables():
 #     tf.summary.histogram(var.name, var)
@@ -268,7 +271,6 @@ elif flow_type == "NoFlow":
     #                            display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
     average_cost = train.train_nf(sess, loss_op, solver, training_epochs, n_samples, mb_size,
                                   display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
-
 
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)

@@ -3,7 +3,7 @@ import tensorflow as tf
 
 def mse_reconstruction_loss(x, x_reconstr):
     with tf.name_scope("mse_reconstruction_loss"):
-        reconstr_loss = tf.reduce_sum((x - x_reconstr) ** 2, name="mse_reconstruction_loss")
+        reconstr_loss = tf.reduce_sum((x - x_reconstr) ** 2, name="mse_reconstruction_loss", axis=[2])
         return reconstr_loss
 
 
@@ -35,6 +35,8 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
     mu = kwargs['z_mu']
     _var = kwargs['z_var']
 
+    print "actual shape", actual.get_shape()
+    print "prediction shape", prediction.get_shape()
     if 'logdet_jacobian' not in kwargs:
         recons_loss = tf.reduce_sum((actual - prediction) ** 2, name="reconstruction_loss")
         kl_loss = -0.5 * tf.reduce_sum(1 + tf.log(1e-6 + _var) - tf.square(mu) - _var,
@@ -43,52 +45,53 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
 
         # Summary of losses
         tf.summary.scalar("reconstruction_loss", recons_loss)
-        tf.summary.scalar("latent_loss", kl_loss)
+        tf.summary.scalar("kl_loss", kl_loss)
         tf.summary.scalar("elbo_loss", _elbo_loss)
         merged_summary_losses = tf.summary.merge_all()
-        return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses
+        # return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses
     else:
         z0 = kwargs['z0']
         zk = kwargs['zk']
         logdet_jacobian = kwargs['logdet_jacobian']
 
         # First term
+
+        print "gaussian_log_pdf(z0, mu, _var) shape:", gaussian_log_pdf(z0, mu, _var).get_shape()
         log_q0_z0 = tf.reduce_sum(gaussian_log_pdf(z0, mu, _var))
-        print "log_q0_z0 shape: ", log_q0_z0.get_shape()
+        print "log_q0_z0 shape:", log_q0_z0.get_shape()
         # Third term
         # sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian,
         #                                     name='sum_logdet_jacobian')
         sum_logdet_jacobian = logdet_jacobian
-        print "sum_logdet_jacobian shape: ", sum_logdet_jacobian.get_shape()
+        print "sum_logdet_jacobian shape:", sum_logdet_jacobian.get_shape()
         # First term - Third term
         log_qk_zk = log_q0_z0 - sum_logdet_jacobian
         print "log_qk_zk shape:", log_qk_zk.get_shape()
-
         # First component of the second term: p(x|z_k)
         if beta:
             beta_t = tf.minimum(1.0, 0.01 + tf.cast(global_step / 10000, tf.float32))  # global_step
-            print "beta_t shape:", beta_t.get_shape()
-            print "recons_error_func(prediction, actual) shape:", recons_error_func(prediction, actual).get_shape()
             log_p_x_given_zk = beta_t * recons_error_func(prediction, actual)
             print "log_p_x_given_zk shape:", log_p_x_given_zk.get_shape()
             log_p_zk = beta_t * tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)))
             print "log_p_zk shape:", log_p_zk.get_shape()
         else:
             log_p_x_given_zk = recons_error_func(prediction, actual)
-            print "log_p_x_given_zk shape:", log_p_x_given_zk.get_shape()
             log_p_zk = tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)))
-            print "log_p_zk shape:", log_p_zk.get_shape()
 
-        recons_loss = log_p_x_given_zk
-        kl_loss = log_qk_zk - log_p_zk
-        _elbo_loss = tf.reduce_mean(kl_loss + recons_loss, name="elbo_loss")
+        print "log_p_x_given_zk shape:", log_p_x_given_zk.get_shape()
+        recons_loss = tf.reduce_mean(log_p_x_given_zk, name="reconstruction_loss")
+        print "recons_loss shape:", recons_loss.get_shape()
+        kl_loss = tf.reduce_mean(log_qk_zk - log_p_zk, name="kl_loss")
+        print "kl_loss shape:", kl_loss.get_shape()
+        _elbo_loss = tf.reduce_sum(kl_loss + recons_loss, name="elbo_loss")
+        print "_elbo_loss shape:", _elbo_loss.get_shape()
 
         # Summary
-        # tf.summary.scalar("reconstruction_loss", reconstr_loss)
-        # tf.summary.scalar("latent_loss", latent_loss)
+        tf.summary.scalar("reconstruction_loss", recons_loss)
+        tf.summary.scalar("kl_loss", kl_loss)
         tf.summary.scalar("elbo_loss", _elbo_loss)
         merged_summary_losses = tf.summary.merge_all()
-        return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses
+    return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses
 
 
 def mse_vanilla_vae_loss(x, x_reconstr, z_mu, z_var):
@@ -103,7 +106,6 @@ def mse_vanilla_vae_loss(x, x_reconstr, z_mu, z_var):
 
     :return: Mean of the two error terms.
     """
-
     print "x shape:", x.get_shape()
     print "x_reconstr:", x_reconstr.get_shape()
     print "z_mu:", z_mu.get_shape()

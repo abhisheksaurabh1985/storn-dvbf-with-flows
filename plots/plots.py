@@ -35,7 +35,7 @@ def plot_signals_and_reconstructions(time_steps, actual, recons, flow_type=None,
         plt.legend(legend_labels, ncol=len(legend_labels), title="Legend")
         f.tight_layout()
         f.savefig(os.path.join(output_dir, str(each_point) + "_" + flow_type + "_" + "recons_signals.png"))
-        plt.show()
+        # plt.show()
 
 
 def plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flow_type=None, output_dir=None):
@@ -65,4 +65,35 @@ def plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flo
 
     f.tight_layout()
     f.savefig(os.path.join(output_dir, flow_type + "_" + "losses.png"))
-    plt.show()
+    # plt.show()
+    # plt.clf()
+
+
+def test_plot_actual_signals(time_steps, actual, points_to_plot=[0, 2, 4, 6, 8, 10]):
+    for each_point in points_to_plot:
+        # Four axes, returned as a 2-d array
+        f, axarr = plt.subplots(2, 2)
+        f.set_size_inches(10, 6)
+        f.suptitle("Actual Signals:" + "Instance " + str(each_point) + " in batch\n\n", fontsize="x-large")
+
+        axarr[0, 0].plot(time_steps, actual[0][:, each_point])
+        # axarr[0, 0].plot(time_steps, recons[0][:, each_point])
+        axarr[0, 0].set_title('Cosine')
+
+        axarr[0, 1].plot(time_steps, actual[1][:, each_point])
+        # axarr[0, 1].plot(time_steps, recons[1][:, each_point])
+        axarr[0, 1].set_title('Sine')
+
+        axarr[1, 0].plot(time_steps, actual[2][:, each_point])
+        # axarr[1, 0].plot(time_steps, recons[2][:, each_point])
+        axarr[1, 0].set_title('Velocity')
+
+        axarr[1, 1].plot(time_steps, actual[3][:, each_point])
+        # axarr[1, 1].plot(time_steps, recons[3][:, each_point])
+        axarr[1, 1].set_title('Reward')
+
+        legend_labels = ["Actual"]
+        plt.legend(legend_labels, ncol=len(legend_labels), title="Legend")
+        f.tight_layout()
+        # f.savefig(os.path.join(output_dir, str(each_point) + "_" + flow_type + "_" + "recons_signals.png"))
+        plt.show()

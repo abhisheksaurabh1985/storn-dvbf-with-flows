@@ -2,13 +2,9 @@ import tensorflow as tf
 
 
 class NormalizingRadialFlow(object):
-    def __init__(self,
-                 z,
-                 z_dim=2,
-                 radial_flow_type='Given in the paper on NF'):  # Remove this line. Get the shape from z.
+    def __init__(self, z, z_dim=2):
         self.z = z
         self.z_dim = z_dim
-        self.radial_flow_type = radial_flow_type
 
     @staticmethod
     def softplus(x):
@@ -85,14 +81,14 @@ class NormalizingRadialFlow(object):
                 print "beta_h_derivative_alpha_r shape", beta_h_derivative_alpha_r.get_shape()
 
                 logdet_jacobian = tf.multiply(((1 + beta_h_alpha_r) ** (n_latent_dim - 1)),
-                                              (1 + beta_h_derivative_alpha_r * r + beta_h_alpha_r))  # Equation 14 second line.
+                                              (1 + beta_h_derivative_alpha_r * r + beta_h_alpha_r))
                 print "logdet_jacobian shape", logdet_jacobian.get_shape()
                 log_detjs.append(tf.expand_dims(logdet_jacobian, 1))
-                logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
-
-                sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian, axis=0)
-                print "sum log det shape", sum_logdet_jacobian.get_shape()
-                print "z shape", z.get_shape()
+            logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
+            print "logdet_jacobian inside Normalizing Planar flow:", logdet_jacobian.get_shape()
+            sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian, axis=0)
+            print "sum_logdet_jacobian inside Normalizing Planar flow:", sum_logdet_jacobian.get_shape()
+            print "z shape", z.get_shape()
         return z, sum_logdet_jacobian
 
 

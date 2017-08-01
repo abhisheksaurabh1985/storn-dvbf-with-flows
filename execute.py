@@ -36,21 +36,20 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 100
-learning_rate = 0.1
-training_epochs = 500
+learning_rate = 0.001
+training_epochs = 5
 display_step = 1
+decoder_output_function = tf.identity
 # model_path = "./output_models/model.ckpt"  # Manually create the directory
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Planar"  # "Planar", "Radial", "NoFlow"
-# nf_planar = True
-# nf_radial = False
+flow_type = "Radial"  # "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 4  # Number of times flow has to be applied.
 apply_invertibility_condition = True
-beta = True
+beta = False
 
 # Plot parameters
 points_to_plot = [0, 2, 4, 6, 8, 10]  # Points in the mini batches which are to be reconstructed and plotted
@@ -69,7 +68,7 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 # Reconstruction error function. Choose either mse_reconstruction_loss or cross_entropy_loss.
-reconstruction_error_function = losses.loss_functions.mse_reconstruction_loss
+reconstruction_error_function = losses.loss_functions.negative_log_normal
 
 # Set up output model directory
 if flow_type == "Planar":
@@ -89,6 +88,7 @@ parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', 
                                       ('HU_enc', HU_enc), ('HU_dec', HU_dec), ('mb_size', mb_size),
                                       ('learning_rate', learning_rate), ('training_epochs', training_epochs),
                                       ('display_steps', display_step), ('flow_type', flow_type), ('numFlows', numFlows),
+                                      ('decoder_output_function', str(decoder_output_function)),
                                       ('apply_invertibility_conditions', apply_invertibility_condition),
                                       ('beta', beta), ('output_dir', output_dir),
                                       ('reconstruction_error_function', str(reconstruction_error_function)),
@@ -115,6 +115,8 @@ _X, z = nn_utilities.inputs(X_dim, n_latent_dim, n_timesteps)
 nne = STORN(X_dim, n_timesteps, HU_enc, HU_dec, n_latent_dim, mb_size, learning_rate, flow_type, numFlows)
 z_mu, z_logvar, flow_params = nne.encoder_rnn(_X)  # Shape:(T,B,z_dim)
 z_var = tf.exp(z_logvar)
+print "z_mu shape", z_mu.get_shape()
+print "z_var shape", z_var.get_shape()
 
 # SAMPLING
 # Sample the latent variables from the posterior using z_mu and z_logvar. 
@@ -207,26 +209,30 @@ if flow_type == "Radial":
     z_k, _logdet_jacobian = tf.scan(apply_radial_flow, (z0, z0s, alphas, betas),
                                     initializer=(z_k_init, _logdet_jacobian_init),
                                     name="apply_flow")
-    sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
+    sum_logdet_jacobian = _logdet_jacobian
 else:
     z_k = z0
 
 # DECODER
-x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
+mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
+var_x_recons = tf.exp(logvar_x_recons)
+x_recons = nne.reparametrize_z(mu_x_recons, var_x_recons)
 
 # LOSS
 if flow_type == "Planar":
     global_step = tf.Variable(0, trainable=False)
     loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
                                                               reconstruction_error_function, z_mu=z_mu, z_var=z_var,
-                                                              z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian)
+                                                              z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian,
+                                                              decoder_mean=mu_x_recons, decoder_variance=var_x_recons)
     # The second element of the loss_op tuple is the elbo loss.
     solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 elif flow_type == "Radial":
     global_step = tf.Variable(0, trainable=False)
     loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
                                                               reconstruction_error_function, z_mu=z_mu, z_var=z_var,
-                                                              z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian)
+                                                              z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian,
+                                                              decoder_mean=mu_x_recons, decoder_variance=var_x_recons)
     # The second element of the loss_op tuple is the elbo loss.
     solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 elif flow_type == "NoFlow":

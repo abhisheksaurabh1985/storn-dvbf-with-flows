@@ -44,11 +44,11 @@ def train_nf(sess, loss_op, solver, nepochs, n_samples, batch_size,
             print "type avg_recons_loss[epoch]", type(float(avg_recons_loss[epoch]))
             print "type avg_kl_loss[epoch]", type(float(avg_kl_loss[epoch]))
             print "type avg_elbo_loss[epoch]", type(float(avg_elbo_loss[epoch]))
-            line = "Epoch: %i \t Average recons loss: %0.2f \t Average kl loss: %0.2f \t Average elbo loss: %0.2f" % \
+            line = "Epoch: %i \t Average recons loss: %0.4f \t Average kl loss: %0.4f \t Average elbo loss: %0.4f" % \
                    (epoch,
-                    float(np.round(avg_recons_loss[epoch], 2)),
-                    float(np.round(avg_kl_loss[epoch], 2)),
-                    float(np.round(avg_elbo_loss[epoch], 2)))
+                    float(np.round(avg_recons_loss[epoch], 4)),
+                    float(np.round(avg_kl_loss[epoch], 4)),
+                    float(np.round(avg_elbo_loss[epoch], 4)))
             print line
             with open(os.path.join(output_dir, "logfile.log"), "a") as f:
                 f.write(line + "\n")

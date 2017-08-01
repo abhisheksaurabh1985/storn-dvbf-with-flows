@@ -5,7 +5,8 @@ import tensorflow as tf
 
 class STORN(object):
     def __init__(self, data_dim, time_steps, n_hidden_units_enc, n_hidden_units_dec, n_latent_dim, batch_size,
-                 learning_rate=0.001, flow_type="NoFlow", num_flows=None, mu_init=0, sigma_init=0.0001):
+                 learning_rate=0.001, flow_type="NoFlow", num_flows=None, mu_init=0, sigma_init=0.0001,
+                 decoder_output_function=tf.identity):
         self.data_dim = data_dim
         self.time_steps = time_steps
         self.n_hidden_units_enc = n_hidden_units_enc
@@ -18,6 +19,7 @@ class STORN(object):
         self.flow_type = flow_type
         # self.nf_planar = nf_planar  # Boolean for planar normalizing flows
         self.num_flows = num_flows  # Number of times flow will be applied
+        self.decoder_output_function = decoder_output_function
 
         # Initializers for encoder parameters
         self.init_wxhe = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
@@ -55,6 +57,15 @@ class STORN(object):
                                                                           self.mu_init,
                                                                           self.sigma_init)
         self.init_dec_bhx = nn_utilities.initialize_bias_with_zeros(self.data_dim)
+
+        self.init_dec_w_mu = nn_utilities.initialize_weights_random_normal(self.data_dim, self.n_hidden_units_dec,
+                                                                          self.mu_init,
+                                                                          self.sigma_init)
+        self.init_dec_w_var = nn_utilities.initialize_weights_random_normal(self.data_dim, self.n_hidden_units_dec,
+                                                                          self.mu_init,
+                                                                          self.sigma_init)
+        self.init_dec_b_h_mu = nn_utilities.initialize_bias_with_zeros(self.data_dim)
+        self.init_dec_b_h_var = nn_utilities.initialize_bias_with_zeros(self.data_dim)
 
         # Initializers for planar normalizing flow parameters in the encoder
         if self.flow_type == "Planar":
@@ -315,7 +326,7 @@ class STORN(object):
         :return x: Reconstruction at each time step. Has a shape (mini_batch, data_dimensions).
         """
         # First element is the initial recurrent state. Second is the initial reconstruction, which isn't needed.
-        h_t, _ = previous_output
+        h_t, _, _, _ = previous_output
         print "Decoding step z_t shape", z_t.get_shape()
         print "Decoding step h_t shape", h_t.get_shape()
         print "Decoding step W_hhd shape", self.W_hhd.get_shape()
@@ -329,9 +340,14 @@ class STORN(object):
         print "Decoding step h shape", h.get_shape()
         print "Decoding step W_hx shape", self.W_hx.get_shape()
         print "Decoding step b_hx shape", self.b_hx.get_shape()
-        x = tf.transpose(tf.identity(tf.tensordot(self.W_hx, h, axes=[[1], [1]]) + self.b_hx), name="x_recons")
-        print "Decoding step x shape", x.get_shape()
-        return h, x
+        # x = tf.transpose(tf.identity(tf.tensordot(self.W_hx, h, axes=[[1], [1]]) + self.b_hx), name="x_recons")
+        # print "Decoding step x shape", x.get_shape()
+        mu_x = tf.transpose(tf.tensordot(self.W_h_mu_dec, h, axes=[[1], [1]]) + self.b_h_mu,
+                            name="mu_x_decoder")
+        logvar_x = tf.transpose(tf.tensordot(self.W_h_var_dec, h, axes=[[1], [1]]) + self.b_h_var,
+                                name="logvar_x_decoder")
+        x = self.decoder_output_function(mu_x, name="x_recons")
+        return h, x, mu_x, logvar_x
 
     def decoder_rnn(self, z):
         """
@@ -351,6 +367,12 @@ class STORN(object):
             self.b_hd = tf.Variable(initial_value=self.init_dec_bhd, name="b_hd", dtype=tf.float32)
             self.W_hx = tf.Variable(initial_value=self.init_dec_whx, name="W_hx", dtype=tf.float32)  # Weights for x_t
             self.b_hx = tf.Variable(initial_value=self.init_dec_bhx, name="b_hx", dtype=tf.float32)
+
+            # Weights for mu and sigma of decoder
+            self.W_h_mu_dec = tf.Variable(initial_value=self.init_dec_w_mu, name="W_h_mu_dec", dtype=tf.float32)
+            self.W_h_var_dec = tf.Variable(initial_value=self.init_dec_w_var, name="W_h_var_dec", dtype=tf.float32)
+            self.b_h_mu = tf.Variable(initial_value=self.init_dec_b_h_mu, name="b_h_mu", dtype=tf.float32)
+            self.b_h_var = tf.Variable(initial_value=self.init_dec_b_h_var, name="b_h_var", dtype=tf.float32)
 
             # Initial recurrent state
             print "z0 first time step shape:", z[0, :, :].get_shape()
@@ -372,11 +394,22 @@ class STORN(object):
                                              mean=0,
                                              stddev=1,
                                              name="dec_recons_init_x")
-            _, self.recons_x = tf.scan(self.decoding_step,
-                                       z, initializer=(initial_recurrent_state, recons_init_x),
-                                       name='recons_x')
+            mu_recons_init_x = tf.random_normal((self.batch_size, self.data_dim),
+                                                mean=0,
+                                                stddev=1,
+                                                name="dec_mu_recons_init_x")
+            logvar_recons_init_x = tf.random_normal((self.batch_size, self.data_dim),
+                                                    mean=0,
+                                                    stddev=1,
+                                                    name="dec_logvar_recons_init_x")
+            _, self.recons_x, self.mu_recons_x, self.logvar_recons_x = tf.scan(self.decoding_step,
+                                                                               z, initializer=(initial_recurrent_state,
+                                                                                               recons_init_x,
+                                                                                               mu_recons_init_x,
+                                                                                               logvar_recons_init_x),
+                                                                               name='recons_x')
             print "recons x shape", self.recons_x.get_shape()
-            return self.recons_x
+            return self.mu_recons_x, self.logvar_recons_x
 
     def reconstruct(self, sess, x, data):
         return sess.run(self.recons_x, feed_dict={x: data})

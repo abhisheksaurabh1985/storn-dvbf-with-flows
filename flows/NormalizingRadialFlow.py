@@ -85,9 +85,9 @@ class NormalizingRadialFlow(object):
                 print "logdet_jacobian shape", logdet_jacobian.get_shape()
                 log_detjs.append(tf.expand_dims(logdet_jacobian, 1))
             logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
-            print "logdet_jacobian inside Normalizing Planar flow:", logdet_jacobian.get_shape()
+            print "logdet_jacobian inside Normalizing Radial flow:", logdet_jacobian.get_shape()
             sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian, axis=0)
-            print "sum_logdet_jacobian inside Normalizing Planar flow:", sum_logdet_jacobian.get_shape()
+            print "sum_logdet_jacobian inside Normalizing Radial flow:", sum_logdet_jacobian.get_shape()
             print "z shape", z.get_shape()
         return z, sum_logdet_jacobian
 

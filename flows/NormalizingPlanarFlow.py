@@ -32,6 +32,8 @@ class NormalizingPlanarFlow(object):
         if num_flows == 0:
             # f_z = z
             sum_logdet_jacobian = logdet_jacobian = 0
+            # sum_logdet_jacobian = tf.Constant(0, dtype=tf.float32)
+            # logdet_jacobian =  tf.zeros(shape=)
         else:
             for k in range(num_flows):
                 u, w, b = us[:, k * n_latent_dim:(k + 1) * n_latent_dim], \

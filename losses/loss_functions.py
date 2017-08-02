@@ -26,8 +26,12 @@ def cross_entropy_loss(prediction, actual, offset=1e-4):
 def kl_divergence_gaussian(mu, var):
     with tf.name_scope("kl_divergence"):
         # kl = - 0.5 * tf.reduce_sum(1.0 + log_var - tf.square(mu) - tf.exp(log_var), 1)
-        _var = tf.clip_by_value(var, 1e-4, 1e6)
-        kl = - 0.5 * tf.reduce_sum(1 + tf.log(_var) - tf.square(mu) - tf.exp(tf.log(_var)), 1,
+        # _var = tf.clip_by_value(var, 1e-4, 1e6)
+        # print "var value", tf.Print(var, [var, tf.shape(var)])
+        # print "mu value", tf.Print(mu, [mu, tf.shape(mu)])
+        # kl = - 0.5 * tf.reduce_sum(1 + tf.log(var + 1e-10) - tf.square(mu) - tf.exp(tf.log(var + 1e-10)), axis=2,
+        #                            name="kl_divergence_gaussian")
+        kl = - 0.5 * tf.reduce_sum(1 + tf.log(var + 1e-10) - tf.square(mu) - var, axis=2,
                                    name="kl_divergence_gaussian")
         return kl
 
@@ -35,11 +39,11 @@ def kl_divergence_gaussian(mu, var):
 def gaussian_log_pdf(z, mu, var):
     with tf.name_scope("gaussian_log_pdf"):
         return tf.contrib.distributions.MultivariateNormalDiag(
-            loc=mu, scale_diag=tf.maximum(tf.sqrt(var), 1e-15)).log_prob(z + 1e-15)
+            loc=mu, scale_diag=tf.maximum(tf.sqrt(var), 1e-30)).log_prob(z + 1e-15, name='log_prob')
 
 
 def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainable=False),
-              recons_error_func=mse_reconstruction_loss, **kwargs):
+              recons_error_func=negative_log_normal, **kwargs):
 
     # Encoder mean and variance
     mu = kwargs['z_mu']
@@ -59,10 +63,22 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
     print "prediction shape", prediction.get_shape()
 
     if 'logdet_jacobian' not in kwargs:
-        recons_loss = tf.reduce_sum((actual - prediction) ** 2, name="reconstruction_loss")
-        kl_loss = -0.5 * tf.reduce_sum(1 + tf.log(1e-6 + _var) - tf.square(mu) - _var,
-                                       axis=None, name="kl_loss")
-        _elbo_loss = tf.reduce_mean(recons_loss + kl_loss, name="elbo_loss")
+
+        if recons_error_func == mse_reconstruction_loss:
+            recons_loss = tf.reduce_mean(mse_reconstruction_loss(actual, prediction), name="reconstruction_loss")
+        elif recons_error_func == negative_log_normal:
+            # shape is (100,99)
+            print "tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), axis=2) shape:", tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), axis=2).get_shape()
+            recons_loss = tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), axis=2),
+                                         name="reconstruction_loss")
+        print "recons_loss shape:", recons_loss.get_shape()  # Shape:()
+        # recons_loss = tf.reduce_sum((actual - prediction) ** 2, name="reconstruction_loss")
+        print "kl_divergence_gaussian(mu, _var) shape:", kl_divergence_gaussian(mu, _var).get_shape()  # Shape:(100,99,?)
+        kl_loss = tf.reduce_mean(kl_divergence_gaussian(mu, _var), name="kl_loss")
+        print "kl_loss shape:", kl_loss.get_shape()  # Shape:()
+        # kl_loss = -0.5 * tf.reduce_sum(1 + tf.log(1e-6 + _var) - tf.square(mu) - _var,
+        #                                axis=None, name="kl_loss")
+        _elbo_loss = tf.add(recons_loss, kl_loss, name="elbo_loss")
 
         # Summary of losses
         tf.summary.scalar("reconstruction_loss", recons_loss)
@@ -96,12 +112,13 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
         if beta:
             beta_t = tf.minimum(1.0, 0.01 + tf.cast(global_step / 10000, tf.float32))  # global_step
             print "recons_error_func", str(recons_error_func)
-            log_p_x_given_zk = - beta_t * tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), 2))
+            log_p_x_given_zk = - beta_t * tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var),
+                                                                       axis=2))
             print "log_p_x_given_zk shape:", log_p_x_given_zk.get_shape()
             log_p_zk = beta_t * tf.reduce_mean(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)))
             print "log_p_zk shape:", log_p_zk.get_shape()
         else:
-            log_p_x_given_zk = - tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), 2))
+            log_p_x_given_zk = - tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), axis=2))
             log_p_zk = tf.reduce_mean(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)))
 
         print "log_p_x_given_zk shape:", log_p_x_given_zk.get_shape()

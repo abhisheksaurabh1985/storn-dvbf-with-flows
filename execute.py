@@ -35,16 +35,16 @@ learned_reward = True  # is the reward handled as observation?
 n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
-mb_size = 100
+mb_size = 99
 learning_rate = 0.0001
-training_epochs = 50
+training_epochs = 10
 display_step = 1
 decoder_output_function = tf.identity
 # model_path = "./output_models/model.ckpt"  # Manually create the directory
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Radial"  # "Planar", "Radial", "NoFlow"
+flow_type = "NoFlow"  # "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 4  # Number of times flow has to be applied.
@@ -68,7 +68,10 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 # Reconstruction error function. Choose either mse_reconstruction_loss or cross_entropy_loss.
-reconstruction_error_function = losses.loss_functions.negative_log_normal
+reconstruction_error_function = losses.loss_functions.mse_reconstruction_loss
+
+# Optimizer
+optimizer = tf.train.AdamOptimizer
 
 # Set up output model directory
 if flow_type == "Planar":
@@ -184,7 +187,7 @@ if flow_type == "Radial":
         print "_logdet_jacobian shape inside apply_radial_flow:", _logdet_jacobian.get_shape()
         _z0, _z0s, _alphas, _betas = current_input
         _flow_params = (_z0s, _alphas, _betas)
-        print "z0 shape inside apply_planar_flow function:", _z0.get_shape()
+        print "z0 shape inside apply_radial_flow function:", _z0.get_shape()
         _z_k, _logdet_jacobian = currentClass.radial_flow(_z0, _flow_params, numFlows, n_latent_dim,
                                                           apply_invertibility_condition)
         print "z_k shape:", _z_k.get_shape()
@@ -226,7 +229,9 @@ if flow_type == "Planar":
                                                               z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian,
                                                               decoder_mean=mu_x_recons, decoder_variance=var_x_recons)
     # The second element of the loss_op tuple is the elbo loss.
-    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    solver = optimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    # solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    # solver = tf.train.RMSPropOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 elif flow_type == "Radial":
     global_step = tf.Variable(0, trainable=False)
     loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
@@ -234,14 +239,16 @@ elif flow_type == "Radial":
                                                               z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian,
                                                               decoder_mean=mu_x_recons, decoder_variance=var_x_recons)
     # The second element of the loss_op tuple is the elbo loss.
-    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    solver = optimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 elif flow_type == "NoFlow":
     global_step = tf.Variable(0, trainable=False)
     # loss_op = nn_utilities.vanilla_vae_loss(_X, x_recons, z_mu, z_var)
     # loss_op, summary_losses = losses.loss_functions.mse_vanilla_vae_loss(_X, x_recons, z_mu, z_var)
     # solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
-    loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, z_mu=z_mu, z_var=z_var)
-    solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    loss_op, summary_losses = losses.loss_functions.elbo_loss(_X, x_recons, z_mu=z_mu, z_var=z_var,
+                                                              decoder_mean=mu_x_recons, decoder_variance=var_x_recons)
+    solver = optimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    # solver = tf.train.RMSPropOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 
 # Initializing the TensorFlow variables
 init = tf.global_variables_initializer()

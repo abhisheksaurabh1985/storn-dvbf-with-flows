@@ -62,6 +62,8 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
     print "actual shape", actual.get_shape()
     print "prediction shape", prediction.get_shape()
 
+    print "recons error function", recons_error_func
+
     if 'logdet_jacobian' not in kwargs:
 
         if recons_error_func == mse_reconstruction_loss:
@@ -73,11 +75,13 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
                                          name="reconstruction_loss")
         print "recons_loss shape:", recons_loss.get_shape()  # Shape:()
         # recons_loss = tf.reduce_sum((actual - prediction) ** 2, name="reconstruction_loss")
-        print "kl_divergence_gaussian(mu, _var) shape:", kl_divergence_gaussian(mu, _var).get_shape()  # Shape:(100,99,?)
-        kl_loss = tf.reduce_mean(kl_divergence_gaussian(mu, _var), name="kl_loss")
-        print "kl_loss shape:", kl_loss.get_shape()  # Shape:()
-        # kl_loss = -0.5 * tf.reduce_sum(1 + tf.log(1e-6 + _var) - tf.square(mu) - _var,
-        #                                axis=None, name="kl_loss")
+
+        # print "kl_divergence_gaussian(mu, _var) shape:", kl_divergence_gaussian(mu, _var).get_shape()  # Shape:(100,99,?)
+        # kl_loss = tf.reduce_mean(kl_divergence_gaussian(mu, _var), name="kl_loss")
+        # print "kl_loss shape:", kl_loss.get_shape()  # Shape:()
+
+        kl_loss = -0.5 * tf.reduce_sum(1 + tf.log(1e-6 + _var) - tf.square(mu) - _var,
+                                       axis=None, name="kl_loss")
         _elbo_loss = tf.add(recons_loss, kl_loss, name="elbo_loss")
 
         # Summary of losses
@@ -86,6 +90,7 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
         tf.summary.scalar("elbo_loss", _elbo_loss)
         merged_summary_losses = tf.summary.merge_all()
         # return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses
+        log_q0_z0 = log_qk_zk = log_p_x_given_zk = log_p_zk = sum_logdet_jacobian = 0
     else:
         z0 = kwargs['z0']
         zk = kwargs['zk']
@@ -137,7 +142,8 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
         tf.summary.scalar("kl_loss", kl_loss)
         tf.summary.scalar("elbo_loss", _elbo_loss)
         merged_summary_losses = tf.summary.merge_all()
-    return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses
+    return (recons_loss, kl_loss, _elbo_loss), merged_summary_losses, (log_q0_z0, log_qk_zk, log_p_x_given_zk,
+                                                                       log_p_zk, sum_logdet_jacobian)
 
 
 def mse_vanilla_vae_loss(x, x_reconstr, z_mu, z_var):

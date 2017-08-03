@@ -6,7 +6,7 @@ import tensorflow as tf
 class STORN(object):
     def __init__(self, data_dim, time_steps, n_hidden_units_enc, n_hidden_units_dec, n_latent_dim, batch_size,
                  learning_rate=0.001, flow_type="NoFlow", num_flows=None, mu_init=0, sigma_init=0.0001,
-                 decoder_output_function=tf.identity):
+                 decoder_output_function=tf.identity, activation_function=tf.nn.relu):
         self.data_dim = data_dim
         self.time_steps = time_steps
         self.n_hidden_units_enc = n_hidden_units_enc
@@ -20,6 +20,7 @@ class STORN(object):
         # self.nf_planar = nf_planar  # Boolean for planar normalizing flows
         self.num_flows = num_flows  # Number of times flow will be applied
         self.decoder_output_function = decoder_output_function
+        self.activation_function = activation_function
 
         # Initializers for encoder parameters
         self.init_wxhe = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
@@ -124,7 +125,7 @@ class STORN(object):
         print "first_term shape", first_term.get_shape()
         second_term = tf.tensordot(self.W_hhe, tf.cast(h_t, tf.float32), axes=[[1], [1]], name="enc_second_term")
         print "second_term shape", second_term.get_shape()
-        output_encoding_step = tf.transpose(tf.tanh(first_term + second_term + self.b_he),  name="output_encoding_step")
+        output_encoding_step = tf.transpose(self.activation_function(first_term + second_term + self.b_he),  name="output_encoding_step")
         print "output_encoding_shape", output_encoding_step.get_shape()
         return output_encoding_step
 
@@ -334,7 +335,7 @@ class STORN(object):
         print "Decoding step b_hd shape", self.b_hd.get_shape()
 
         # W_hhd:(100,100); h_t:(100,6); W_xhd: (100,5); x_t:(6,5); b_hd:(100,1)
-        h = tf.transpose(tf.tanh(tf.tensordot(self.W_hhd, h_t, axes=[[1], [1]], name="dec_rec_first_term_h") +
+        h = tf.transpose(self.activation_function(tf.tensordot(self.W_hhd, h_t, axes=[[1], [1]], name="dec_rec_first_term_h") +
                                  tf.tensordot(self.W_zh, z_t, axes=[[1], [1]], name="dec_rec_second_term_h") +
                                  self.b_hd), name="decoding_step_tr_h")
         print "Decoding step h shape", h.get_shape()

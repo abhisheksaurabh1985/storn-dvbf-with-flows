@@ -1,6 +1,12 @@
 import numpy as np
 
 
+def normalize_data(X):
+    X = X - np.expand_dims(np.mean(X, axis=1), axis=1)  # zero-center
+    X = X / np.expand_dims(np.std(X, axis=1), axis=1)  # normalize
+    return X
+
+
 def rollout(env, n_samples, n_timesteps, n_environment_steps=None, split_batch_ratio=1, learned_reward=True,
             filter_mode=False, z_0=None, fn_action=None, render=False):
     """

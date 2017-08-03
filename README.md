@@ -11,4 +11,6 @@ TODO: 26-July-2017
 TODO: 01-Aug-2017
 - Radial flows: alphas are positive. Initialize alphas using a uniform distribution between 0 and 1. 
 Ask Max if this can ensure positive alphas.  
-- Handle the case of numFlow=0. Define sum_logdet_jacobian as a tensorflow variable. 
+- Handle the case of numFlow=0. Define sum_logdet_jacobian as a tensorflow variable.
+- Save the models in the directory corresponding to the flow. For example, 'Planar' directory should
+ have the output as well as the saved models. 

@@ -50,8 +50,6 @@ class NormalizingPlanarFlow(object):
                     print "muw shape", muw.get_shape()
                     u_hat = u + tf.multiply((muw - uw), w) / tf.norm(w, axis=-1, keep_dims=True)**2
                     print "u_hat shape", u_hat.get_shape()
-                    print "norm_w shape", tf.norm(w, axis=[-2, -1]).get_shape()
-                    print "norm_w shape", tf.norm(w, axis=-1).get_shape()
                 else:
                     u_hat = u
                 print "u_hat shape", u_hat.get_shape()

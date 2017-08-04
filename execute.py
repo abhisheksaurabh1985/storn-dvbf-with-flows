@@ -37,8 +37,8 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 100
-learning_rate = 0.00005  # 0.0001
-training_epochs = 5
+learning_rate = 0.0001 # 0.0001
+training_epochs = 100
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.0001  # Params for random normal weight initialization
@@ -48,7 +48,7 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Planar"  # "Planar", "Radial", "NoFlow"
+flow_type = "NoFlow"  # "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 4  # Number of times flow has to be applied.

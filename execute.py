@@ -38,20 +38,20 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.001  # 0.0001
-training_epochs = 10000
+training_epochs = 1500
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
-sigma_init = 0.0001  # Params for random normal weight initialization
+sigma_init = 0.001  # Params for random normal weight initialization
 decoder_output_function = tf.identity
 activation_function = tf.nn.relu
 # model_path = "./output_models/model.ckpt"  # Manually create the directory
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "NoFlow"  # "Planar", "Radial", "NoFlow"
+flow_type = "Planar"  # "Planar", "Radial", "NoFlow"
 
 # Flow parameters
-numFlows = 4  # Number of times flow has to be applied.
+numFlows = 2  # Number of times flow has to be applied.
 apply_invertibility_condition = True
 beta = False
 
@@ -176,8 +176,11 @@ if flow_type == "Planar":
 
     print "z_k shape in execute.py line 96ish:", z_k.get_shape()
     print "_logdet_jacobian shape in execute.py line 97ish:", _logdet_jacobian.get_shape()
-    print "_logdet_jacobian", _logdet_jacobian
-    sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
+    print "$$$$$$$$$$$$$$$$$_logdet_jacobian", _logdet_jacobian
+    # sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
+    # sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=1)
+    sum_logdet_jacobian = _logdet_jacobian
+    print "$$$$$$$$$$$$$$$$$sum_logdet_jacobian", sum_logdet_jacobian
 elif flow_type == "Radial":
     currentClass = NormalizingRadialFlow.NormalizingRadialFlow(z0, n_latent_dim)
 
@@ -213,7 +216,7 @@ elif flow_type == "Radial":
     z_k, _logdet_jacobian = tf.scan(apply_radial_flow, (z0, z0s, alphas, betas),
                                     initializer=(z_k_init, _logdet_jacobian_init),
                                     name="apply_flow")
-    sum_logdet_jacobian = _logdet_jacobian
+    sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
 elif flow_type == "NoFlow":
     z_k = z0
 

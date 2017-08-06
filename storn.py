@@ -5,7 +5,7 @@ import tensorflow as tf
 
 class STORN(object):
     def __init__(self, data_dim, time_steps, n_hidden_units_enc, n_hidden_units_dec, n_latent_dim, batch_size,
-                 learning_rate=0.001, flow_type="NoFlow", num_flows=None, mu_init=0, sigma_init=0.0001,
+                 learning_rate=0.001, flow_type="NoFlow", num_flows=None, mu_init=0, sigma_init=0.00001,
                  decoder_output_function=tf.identity, activation_function=tf.nn.relu):
         self.data_dim = data_dim
         self.time_steps = time_steps

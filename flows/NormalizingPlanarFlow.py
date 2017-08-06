@@ -31,9 +31,8 @@ class NormalizingPlanarFlow(object):
         log_detjs = []
         if num_flows == 0:
             # f_z = z
-            sum_logdet_jacobian = logdet_jacobian = 0
-            # sum_logdet_jacobian = tf.Constant(0, dtype=tf.float32)
-            # logdet_jacobian =  tf.zeros(shape=)
+            # sum_logdet_jacobian = logdet_jacobian = 0
+            sum_logdet_jacobian = tf.Variable(0.0, dtype=tf.float32)
         else:
             for k in range(num_flows):
                 u, w, b = us[:, k * n_latent_dim:(k + 1) * n_latent_dim], \
@@ -44,11 +43,12 @@ class NormalizingPlanarFlow(object):
                 print "b shape", b.get_shape()
                 if invert_condition:
                     uw = tf.reduce_sum(tf.multiply(w, u), axis=1, keep_dims=True)  # u: (?,2), w: (?,2), b: (?,)
+                    print "tf.multiply(w, u) shape", tf.multiply(w, u).get_shape()
                     # uw = tf.tensordot(u, w, axes = 1)
                     print "uw shape", uw.get_shape()
-                    muw = -1 + tf.nn.softplus(uw)  # = -1 + T.log(1 + T.exp(uw))
+                    muw = -1 + tf.nn.softplus(uw)
                     print "muw shape", muw.get_shape()
-                    u_hat = u + tf.multiply((muw - uw), w) / tf.norm(w, axis=-1, keep_dims=True)**2
+                    u_hat = u + tf.multiply((muw - uw), w) / tf.norm(w, ord='euclidean', axis=-1, keep_dims=True)**2
                     print "u_hat shape", u_hat.get_shape()
                 else:
                     u_hat = u
@@ -61,6 +61,8 @@ class NormalizingPlanarFlow(object):
                 # print "zwb shape", zwb.get_shape()
                 # Equation 10: f(z)= z+ uh(w'z+b)
                 # print "u_hat", u_hat.get_shape()
+                print "z shape", z.get_shape()
+                print "z + u_hat * tf.reshape(self.tanh(zwb), [-1, 1]) shape", (z + u_hat * tf.reshape(self.tanh(zwb), [-1, 1])).get_shape()
                 z = z + u_hat * tf.reshape(self.tanh(zwb), [-1, 1])  # self.z is (?,2)
                 psi = tf.reshape((1 - self.tanh(zwb) ** 2), [-1, 1]) * w  # Equation 11. # tanh(x)dx = 1 - tanh(x)**2
                 # psi= tf.reduce_sum(tf.matmul(tf.transpose(1-self.tanh(zwb)**2), self.w))

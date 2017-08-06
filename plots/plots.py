@@ -89,8 +89,8 @@ def plot_probability_densities(nepochs, log_q0_z0, log_qk_zk, log_p_x_given_zk, 
 
     plt.figure(2)
     plt.plot(range_epochs, log_p_x_given_zk)
-    plt.title("Average $log\, p(x)|z_k$ per Epoch")
-    plt.ylabel("Average $log p(x)|z_k$")
+    plt.title("Average $log\, p(x|z_k)$ per Epoch")
+    plt.ylabel("Average $log p(x|z_k)$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_p_x_given_zk.png"))
 

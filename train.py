@@ -23,7 +23,7 @@ def train_nf(sess, loss_op, loss_summary, prob_dists, solver, nepochs, n_samples
         # Loop over all batches
         for i in range(total_batch):
             batch_xs = data.train.next_batch(batch_size)
-            batch_xs = dataset_utils.normalize_data(batch_xs)
+            batch_xs = dataset_utils.normalize_data(batch_xs)  # Use z-score normalization
             _, cost, res_summary, probability_distributions = sess.run([solver, loss_op, summary, prob_dists],
                                                                        feed_dict={_X: batch_xs})
             recons_loss = cost[0]

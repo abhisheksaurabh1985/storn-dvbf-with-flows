@@ -14,3 +14,7 @@ Ask Max if this can ensure positive alphas.
 - Handle the case of numFlow=0. Define sum_logdet_jacobian as a tensorflow variable.
 - Save the models in the directory corresponding to the flow. For example, 'Planar' directory should
  have the output as well as the saved models. 
+
+TODO: 05-Aug-2017
+- Play with the amount of noise. Noise does not have to be a standard normal. It serves as a discretization parameter. 
+A/c to me, the smaller the noise, the better the reconstruction should be. 

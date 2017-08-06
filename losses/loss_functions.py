@@ -84,6 +84,8 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
         # First term
         log_q0_z0 = tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(z0, mu, _var), axis=2))
         # Third term
+        print "############################logdet_jacobian shape:", logdet_jacobian.get_shape()
+
         sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian, name='sum_logdet_jacobian')
         # sum_logdet_jacobian = logdet_jacobian
         # First term - Third term
@@ -91,15 +93,16 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
 
         # First component of the second term: p(x|z_k)
         if beta:
-            beta_t = tf.minimum(1.0, 0.01 + tf.cast(global_step / 10000, tf.float32))  # global_step
+            beta_t = tf.minimum(1.0, 0.01 + tf.cast(global_step / 100, tf.float32))  # global_step
             log_p_x_given_zk = - beta_t * tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var),
                                                                        axis=2))
-            log_p_zk = beta_t * tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)),
-                                                             axis=2))
+            # log_p_zk = beta_t * tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)),
+            #                                                  axis=2))
+            log_p_zk = beta_t * tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, 0.0, 1.0), axis=2))
         else:
             log_p_x_given_zk = - tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), axis=2))
-            log_p_zk = tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)), axis=2))
-
+            # log_p_zk = tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)), axis=2))
+            log_p_zk = tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, 0.0, 1.0), axis=2))
         # recons_loss = tf.reduce_mean(log_p_x_given_zk, name="reconstruction_loss")
         recons_loss = - log_p_x_given_zk
         # kl_loss = tf.reduce_mean(log_qk_zk - log_p_zk, name="kl_loss")

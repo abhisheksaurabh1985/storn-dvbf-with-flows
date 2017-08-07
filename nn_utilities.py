@@ -31,7 +31,7 @@ def initialize_weights_random_normal(dim1, dim2, mu, sigma):
     return tf.random_normal((dim1, dim2), mean=mu, stddev=sigma)
 
 
-def initialize_weights_uniform_distribution(dim1, dim2, _min=0, _max=1):
+def initialize_weights_uniform_distribution(dim1, dim2, _min=0.1, _max=1):
     return tf.random_uniform((dim1, dim2), minval=_min, maxval=_max)
 
 

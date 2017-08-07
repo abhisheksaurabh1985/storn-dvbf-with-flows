@@ -93,10 +93,10 @@ class STORN(object):
                                                                             self.mu_init,
                                                                             self.sigma_init)
             self.init_b_z0s = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.n_latent_dim)
-            self.init_w_alphas = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
-                                                                               self.num_flows,
-                                                                               self.mu_init,
-                                                                               self.sigma_init)
+            self.init_w_alphas = nn_utilities.initialize_weights_uniform_distribution(self.n_hidden_units_enc,
+                                                                                      self.num_flows,
+                                                                                      self.mu_init,
+                                                                                      self.sigma_init)
             self.init_b_alphas = nn_utilities.initialize_bias_with_zeros(self.num_flows)
             self.init_w_betas = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
                                                                               self.num_flows,
@@ -314,6 +314,8 @@ class STORN(object):
         Executed by the tf.scan function in decoder_rnn for as many times as there are time steps (eqv to the first
         dimension of z when the function call is made). Data at each time step is used one at a time. Therefore, the
         dimension of z_t is (mini_batch,nDimLatentSpace).
+
+        Hidden state at (t+1) depends on the hidden state at t and the value of z at (t+1).
 
         First input is the previous output, initialized at the time of function call. Second is the current input i.e.
         input in the latent space which is to be reconstructed.

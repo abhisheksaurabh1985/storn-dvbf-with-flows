@@ -29,7 +29,7 @@ class NormalizingRadialFlow(object):
         log_detjs = []
         if num_flows == 0:
             # f_z = z
-            sum_logdet_jacobian = 0
+            sum_logdet_jacobian = tf.Variable(0.0, dtype=tf.float32)
         else:
             for k in range(num_flows):
                 # z0, alpha, beta = z0s[:, k*Z:(k+1)*Z], alphas[:, k*Z:(k+1)*Z], betas[:, k]
@@ -42,7 +42,7 @@ class NormalizingRadialFlow(object):
                     m_of_beta = self.softplus(beta)
                     print "m_of_beta", m_of_beta.get_shape()
                     print "alpha", alpha.get_shape()
-                    beta_hat = -alpha + m_of_beta  # It's a scalar.
+                    beta_hat = - alpha + m_of_beta  # It's a scalar.
                     print "beta_hat", beta_hat.get_shape()
                 else:
                     beta_hat = beta
@@ -69,7 +69,8 @@ class NormalizingRadialFlow(object):
                 # z = z + beta_hat * tf.multiply((z-z0), h_alpha_r)
                 print "Shape 2nd term", tf.multiply(tf.multiply((z - z0), h_alpha_r), beta_hat).get_shape()
                 # z = z + tf.multiply(tf.multiply((z-z0), h_alpha_r), beta_hat)
-                z = z + tf.multiply(tf.multiply((z - z0), tf.expand_dims(h_alpha_r, 1)), tf.expand_dims(beta_hat, 1))
+                # z = z + tf.multiply(tf.multiply((z - z0), tf.expand_dims(h_alpha_r, 1)), tf.expand_dims(beta_hat, 1))
+                z = z + tf.multiply((z - z0), tf.expand_dims(beta_h_alpha_r, 1))
                 # print "z shape", z.get_shape()
                 # Calculation of log det jacobian
                 print "r shape", r.get_shape()
@@ -86,7 +87,7 @@ class NormalizingRadialFlow(object):
                 log_detjs.append(tf.expand_dims(logdet_jacobian, 1))
             logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
             print "logdet_jacobian inside Normalizing Radial flow:", logdet_jacobian.get_shape()
-            sum_logdet_jacobian = tf.reduce_mean(logdet_jacobian, axis=0)
+            sum_logdet_jacobian = tf.reduce_sum(logdet_jacobian, axis=1)
             print "sum_logdet_jacobian inside Normalizing Radial flow:", sum_logdet_jacobian.get_shape()
             print "z shape", z.get_shape()
         return z, sum_logdet_jacobian

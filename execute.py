@@ -37,8 +37,8 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 20
-learning_rate = 0.001  # 0.0001
-training_epochs = 1500
+learning_rate = 0.0001  # 0.0001
+training_epochs = 10
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -53,7 +53,7 @@ flow_type = "Planar"  # "Planar", "Radial", "NoFlow"
 # Flow parameters
 numFlows = 2  # Number of times flow has to be applied.
 apply_invertibility_condition = True
-beta = False
+beta = True
 
 # Plot parameters
 points_to_plot = [0, 2, 4, 6, 8, 10]  # Points in the mini batches which are to be reconstructed and plotted
@@ -73,6 +73,10 @@ if not os.path.exists(output_dir):
 
 # Reconstruction error function. Choose either negative_log_normal, mse_reconstruction_loss or cross_entropy_loss.
 reconstruction_error_function = losses.loss_functions.negative_log_normal
+
+# Restore saved model
+restore_model = False
+
 
 # Set up output model directory
 if flow_type == "Planar":
@@ -127,15 +131,12 @@ nne = STORN(X_dim, n_timesteps, HU_enc, HU_dec, n_latent_dim, mb_size, learning_
             mu_init, sigma_init, decoder_output_function, activation_function)
 z_mu, z_logvar, flow_params = nne.encoder_rnn(_X)  # Shape:(T,B,z_dim)
 z_var = tf.exp(z_logvar)
-print "z_mu shape", z_mu.get_shape()
-print "z_var shape", z_var.get_shape()
+
 
 # SAMPLING
 # Sample the latent variables from the posterior using z_mu and z_logvar. 
 # Reparametrization trick is implicit in this step. Reference: Section 3 Kingma et al (2013).
 z0 = nne.reparametrize_z(z_mu, z_var)
-print "z0 shape in execute.py:", z0.get_shape()
-print "z0[0,:,:] shape in execute.py:", z0[0, :, :].get_shape()
 
 # Apply flow
 if flow_type == "Planar":
@@ -144,15 +145,10 @@ if flow_type == "Planar":
 
     def apply_planar_flow(previous_output, current_input):
         _z_k, _logdet_jacobian = previous_output
-        print "z_k shape inside apply_planar_flow:", _z_k.get_shape()
-        print "_logdet_jacobian shape inside apply_planar_flow:", _logdet_jacobian.get_shape()
         _z0, _us, _ws, _bs = current_input
         _flow_params = (_us, _ws, _bs)
-        print "z0 shape inside apply_planar_flow function:", _z0.get_shape()
         _z_k, _logdet_jacobian = currentClass.planar_flow(_z0, _flow_params, numFlows, n_latent_dim,
                                                           apply_invertibility_condition)
-        print "z_k shape:", _z_k.get_shape()
-        print "_logdet_jacobian shape:", _logdet_jacobian.get_shape()
         return _z_k, _logdet_jacobian
 
 
@@ -162,10 +158,6 @@ if flow_type == "Planar":
 
     # The flow_params tuple had to be decomposed into us, ws and bs so as to make it compatible with tf.scan. Note that
     # this process is reversed inside the apply_flow function.
-    print "flow_params[0]", flow_params[0].get_shape()
-    print "flow_params[1]", flow_params[1].get_shape()
-    print "flow_params[2]", flow_params[2].get_shape()
-
     us = flow_params[0]
     ws = flow_params[1]
     bs = flow_params[2]
@@ -173,29 +165,20 @@ if flow_type == "Planar":
     z_k, _logdet_jacobian = tf.scan(apply_planar_flow, (z0, us, ws, bs),
                                     initializer=(z_k_init, _logdet_jacobian_init),
                                     name="apply_flow")
-
-    print "z_k shape in execute.py line 96ish:", z_k.get_shape()
-    print "_logdet_jacobian shape in execute.py line 97ish:", _logdet_jacobian.get_shape()
-    print "$$$$$$$$$$$$$$$$$_logdet_jacobian", _logdet_jacobian
     # sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
     # sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=1)
+    print "############### _logdet_jacobian", _logdet_jacobian.get_shape()
     sum_logdet_jacobian = _logdet_jacobian
-    print "$$$$$$$$$$$$$$$$$sum_logdet_jacobian", sum_logdet_jacobian
 elif flow_type == "Radial":
     currentClass = NormalizingRadialFlow.NormalizingRadialFlow(z0, n_latent_dim)
 
 
     def apply_radial_flow(previous_output, current_input):
         _z_k, _logdet_jacobian = previous_output
-        print "z_k shape inside apply_radial_flow:", _z_k.get_shape()
-        print "_logdet_jacobian shape inside apply_radial_flow:", _logdet_jacobian.get_shape()
         _z0, _z0s, _alphas, _betas = current_input
         _flow_params = (_z0s, _alphas, _betas)
-        print "z0 shape inside apply_radial_flow function:", _z0.get_shape()
         _z_k, _logdet_jacobian = currentClass.radial_flow(_z0, _flow_params, numFlows, n_latent_dim,
                                                           apply_invertibility_condition)
-        print "z_k shape:", _z_k.get_shape()
-        print "_logdet_jacobian shape:", _logdet_jacobian.get_shape()
         return _z_k, _logdet_jacobian
 
 
@@ -205,10 +188,6 @@ elif flow_type == "Radial":
 
     # The flow_params tuple had to be decomposed into us, ws and bs so as to make it compatible with tf.scan. Note that
     # a tuple is again created inside the apply_flow function.
-    print "flow_params[0]", flow_params[0].get_shape()
-    print "flow_params[1]", flow_params[1].get_shape()
-    print "flow_params[2]", flow_params[2].get_shape()
-
     z0s = flow_params[0]
     alphas = flow_params[1]
     betas = flow_params[2]
@@ -216,7 +195,8 @@ elif flow_type == "Radial":
     z_k, _logdet_jacobian = tf.scan(apply_radial_flow, (z0, z0s, alphas, betas),
                                     initializer=(z_k_init, _logdet_jacobian_init),
                                     name="apply_flow")
-    sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
+    # sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
+    sum_logdet_jacobian = _logdet_jacobian
 elif flow_type == "NoFlow":
     z_k = z0
 
@@ -266,11 +246,6 @@ sess = tf.InteractiveSession()
 sess.run(init)
 # sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
 
-# Save the tensorflow model. Keep only 4 latest models. keep_checkpoint_every_n_hours can be used to save a model after
-# every n hours.
-saver = tf.train.Saver(max_to_keep=4)
-saver.save(sess, os.path.join(models_dir, 'model.ckpt'))
-
 # Create summary to visualise weights
 # for var in tf.trainable_variables():
 #     tf.summary.histogram(var.name, var)
@@ -280,21 +255,33 @@ merged_summary_op = tf.summary.merge_all()
 file_writer = tf.summary.FileWriter(logs_path + "/" + str(int(time.time())),
                                     graph=sess.graph)
 
-# TRAINING
-if flow_type == "Planar":
-    average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
-                                  solver, training_epochs, n_samples, mb_size,
-                                  display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
-elif flow_type == "Radial":
-    average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
-                                  solver, training_epochs, n_samples, mb_size,
-                                  display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
-elif flow_type == "NoFlow":
-    # average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
-    #                            display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
-    average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
-                                  solver, training_epochs, n_samples, mb_size,
-                                  display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+saver = tf.train.Saver(max_to_keep=4)
+
+if not restore_model:
+
+    # TRAINING
+    if flow_type == "Planar":
+        average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
+                                      solver, training_epochs, n_samples, mb_size,
+                                      display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+    elif flow_type == "Radial":
+        average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
+                                      solver, training_epochs, n_samples, mb_size,
+                                      display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+    elif flow_type == "NoFlow":
+        # average_cost = train.train(sess, loss_op, solver, training_epochs, n_samples, mb_size,
+        #                            display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+        average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
+                                      solver, training_epochs, n_samples, mb_size,
+                                      display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+
+    # Save the tensorflow model. Keep only 4 latest models. keep_checkpoint_every_n_hours can be used to save a model after
+    # every n hours.
+    saver.save(sess, os.path.join(models_dir, 'model.ckpt'))
+else:
+    saver.restore(sess, os.path.join(models_dir, 'model.ckpt'))
+
+
 
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)
@@ -331,3 +318,19 @@ plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_
                                              points_to_plot)
 
 sess.close()
+
+
+# Plot losses sans outliers
+# Specify some other target directory. Else it will overwrite the existing plots.
+# fpath_logfile = './storn_dvbf_with_flows/results_worth_saving/planar_2017_08_06_18_52_19/logfile.log'
+# fpath_losses_sans_outliers = '/home/abhishek/Desktop/'
+# threshold = 2
+# data = plots.helper_functions.read_loss_logfile(fpath_logfile)
+# data_sans_outlier = plots.helper_functions.remove_outliers(data, threshold=2)
+# epochs = len(data_sans_outlier[:, 0])
+# avg_re = data_sans_outlier[:, 1]
+# avg_kl = data_sans_outlier[:, 2]
+# avg_elbo = data_sans_outlier[:, 3]
+# plots.plots.plot_losses_for_nf(epochs, avg_re, avg_kl, avg_elbo, flow_type, fpath_losses_sans_outliers)
+
+

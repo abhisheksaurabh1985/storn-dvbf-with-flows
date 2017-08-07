@@ -18,3 +18,8 @@ Ask Max if this can ensure positive alphas.
 TODO: 05-Aug-2017
 - Play with the amount of noise. Noise does not have to be a standard normal. It serves as a discretization parameter. 
 A/c to me, the smaller the noise, the better the reconstruction should be. 
+
+
+Observations:
+06-Aug-2017 - Planar flow - 2017_08_06_16_24_50 - Reconstruction even after 5000 iterations. But sine and velocity were 
+not reconstructed even after 75000 iterations. 

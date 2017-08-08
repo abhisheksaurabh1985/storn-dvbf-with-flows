@@ -38,7 +38,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001
-training_epochs = 10
+training_epochs = 5
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -76,15 +76,20 @@ reconstruction_error_function = losses.loss_functions.negative_log_normal
 
 # Restore saved model
 restore_model = False
-
+# If restore_model is True, set path to the model to be restored. Ignore file name model.ckpt.
+fpath_restore_model = "./output/radial/2017_08_08_09_26_48/output_models/"
 
 # Set up output model directory
 if flow_type == "Planar":
-    models_dir = "./output_models/planar/"
+    models_dir = os.path.join(output_dir, "output_models/")
 elif flow_type == "Radial":
-    models_dir = "./output_models/radial/"
+    models_dir = os.path.join(output_dir, "output_models/")
 elif flow_type == "NoFlow":
-    models_dir = "./output_models/no_flow/"
+    models_dir = os.path.join(output_dir, "output_models/")
+
+# Create directory for output models
+if not os.path.exists(models_dir):
+    os.makedirs(models_dir)
 
 # Set up tf_logs directory
 if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow":
@@ -105,6 +110,8 @@ parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', 
                                       ('activation_function', str(activation_function)),
                                       ('apply_invertibility_conditions', apply_invertibility_condition),
                                       ('beta', beta), ('output_dir', output_dir),
+                                      ('restore_model', restore_model),
+                                      ('fpath_restore_model', fpath_restore_model),
                                       ('reconstruction_error_function', str(reconstruction_error_function)),
                                       ('models_dir', models_dir), ('logs_path', logs_path),
                                       ('optimizer', str(optimizer))])
@@ -131,7 +138,8 @@ nne = STORN(X_dim, n_timesteps, HU_enc, HU_dec, n_latent_dim, mb_size, learning_
             mu_init, sigma_init, decoder_output_function, activation_function)
 z_mu, z_logvar, flow_params = nne.encoder_rnn(_X)  # Shape:(T,B,z_dim)
 z_var = tf.exp(z_logvar)
-
+print "###########################@@@@@@@@@@@@@@@@@@@@@ z_mu shape", z_mu.get_shape()
+print "###########################@@@@@@@@@@@@@@@@@@@@@ z_var shape", z_var.get_shape()
 
 # SAMPLING
 # Sample the latent variables from the posterior using z_mu and z_logvar. 
@@ -275,12 +283,11 @@ if not restore_model:
                                       solver, training_epochs, n_samples, mb_size,
                                       display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
 
-    # Save the tensorflow model. Keep only 4 latest models. keep_checkpoint_every_n_hours can be used to save a model after
-    # every n hours.
+    # Save the tensorflow model. Keep only 4 latest models. keep_checkpoint_every_n_hours can be used to save a model
+    # after every n hours.
     saver.save(sess, os.path.join(models_dir, 'model.ckpt'))
 else:
-    saver.restore(sess, os.path.join(models_dir, 'model.ckpt'))
-
+    saver.restore(sess, os.path.join(fpath_restore_model, 'model.ckpt'))
 
 
 # RECONSTRUCTION
@@ -318,6 +325,16 @@ plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_
                                              points_to_plot)
 
 sess.close()
+
+#############################
+# Generative Sampling
+############################
+gs_z_mu = tf.zeros(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
+                   name="z_mu_generative_sampling")
+gs_z_var = tf.ones(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
+                   name="z_var_generative_sampling")
+
+gs_z0 = nne.reparametrize_z(gs_z_mu, gs_z_var)
 
 
 # Plot losses sans outliers

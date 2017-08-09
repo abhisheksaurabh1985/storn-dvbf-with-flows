@@ -77,7 +77,7 @@ reconstruction_error_function = losses.loss_functions.negative_log_normal
 # Restore saved model
 restore_model = False
 # If restore_model is True, set path to the model to be restored. Ignore file name model.ckpt.
-fpath_restore_model = "./output/radial/2017_08_08_09_26_48/output_models/"
+fpath_restore_model = "./output/planar/2017_08_08_12_02_37/output_models/"
 
 # Set up output model directory
 if flow_type == "Planar":
@@ -302,6 +302,32 @@ x_reconstructed = nne.reconstruct(sess, _X, x_sample)
 print "x_reconstructed type", type(x_reconstructed)
 print "x_reconstructed shape", x_reconstructed.shape
 
+# GENERATIVE SAMPLES
+
+
+def latent_standard_normal_prior(nts, mbs, zdim):
+    mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
+                    name="z_mu_generative_sampling")
+    variance = tf.ones(shape=[nts, mbs, zdim], dtype=tf.float32,
+                       name="z_var_generative_sampling")
+    latent_var = nne.reparametrize_z(mean, variance)
+    return mean, variance, latent_var
+
+gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
+
+gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0)
+gs_var_x_recons = tf.exp(gs_logvar_x_recons)
+gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
+
+
+def generative_samples(sess, gs_x_recons):
+    return sess.run(gs_x_recons)
+
+gs_samples = generative_samples(sess, gs_x_recons)
+print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
+print "gs_samples shape:", gs_samples.shape
+print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
+
 # PLOTS
 # Prepare data for plotting
 cos_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 0)
@@ -316,25 +342,52 @@ w_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 2)  # Angul
 reward_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 3)
 print cos_recons.shape, sine_recons.shape, w_recons.shape, reward_recons.shape
 
+cos_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 0)
+sine_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 1)
+w_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 2)  # Angular velocity omega
+reward_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 3)
+print cos_generative_sample.shape, sine_generative_sample.shape, w_generative_sample.shape, reward_generative_sample.shape
+
 # Plot cosine: actual, reconstruction and generative sampling
 time_steps = range(n_timesteps)
 actual_signals = [cos_actual, sine_actual, w_actual, reward_actual]
 recons_signals = [cos_recons, sine_recons, w_recons, reward_recons]
+generative_signals = [cos_generative_sample, sine_generative_sample, w_generative_sample, reward_generative_sample]
 
-plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals, flow_type, output_dir,
-                                             points_to_plot)
+plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals, flow_type,
+                                             output_dir, points_to_plot)
 
 sess.close()
 
-#############################
-# Generative Sampling
-############################
-gs_z_mu = tf.zeros(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
-                   name="z_mu_generative_sampling")
-gs_z_var = tf.ones(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
-                   name="z_var_generative_sampling")
 
-gs_z0 = nne.reparametrize_z(gs_z_mu, gs_z_var)
+###########################
+# Generative Sampling
+###########################
+
+# def latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim):
+#     gs_z_mu = tf.zeros(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
+#                        name="z_mu_generative_sampling")
+#     gs_z_var = tf.ones(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
+#                        name="z_var_generative_sampling")
+#     gs_z0 = nne.reparametrize_z(gs_z_mu, gs_z_var)
+#     return gs_z_mu, gs_z_var, gs_z0
+#
+# gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
+#
+# gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0)
+# gs_var_x_recons = tf.exp(gs_logvar_x_recons)
+# gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
+#
+#
+# def generative_samples(sess, gs_x_recons, z_mu, gs_z_mu, z_var, gs_z_var):
+#     return sess.run(gs_x_recons)
+#
+#
+# # def generative_samples(sess, gs_x_recons, z_mu, gs_z_mu, z_var, gs_z_var):
+# #     return sess.run(x_recons, feed_dict={z_mu: gs_z_mu, z_var: gs_z_var})
+#
+# gs_samples = generative_samples(sess, gs_x_recons, z_mu, gs_z_mu, z_var, gs_z_var)
+#
 
 
 # Plot losses sans outliers

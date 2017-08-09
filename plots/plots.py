@@ -14,7 +14,7 @@ def plot_signals_and_reconstructions(time_steps, actual, recons, flow_type=None,
         # Four axes, returned as a 2-d array
         f, axarr = plt.subplots(2, 2)
         f.set_size_inches(10, 6)
-        f.suptitle("Actual and Reconstructed Signals:" + "Instance " + str(each_point) + " in batch\n\n",
+        f.suptitle("Actual, Reconstructed and Generative Signals:" + "Instance " + str(each_point) + " in batch\n\n",
                    fontsize="x-large")
 
         axarr[0, 0].plot(time_steps, actual[0][:, each_point])
@@ -37,7 +37,6 @@ def plot_signals_and_reconstructions(time_steps, actual, recons, flow_type=None,
         plt.legend(legend_labels, ncol=len(legend_labels), title="Legend")
         f.tight_layout()
         f.savefig(os.path.join(output_dir, str(each_point) + "_" + flow_type + "_" + "recons_signals.png"))
-        # plt.show()
 
 
 def plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flow_type=None, output_dir=None):

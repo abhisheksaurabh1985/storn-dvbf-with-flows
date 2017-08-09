@@ -33,7 +33,8 @@ class NormalizingRadialFlow(object):
         else:
             for k in range(num_flows):
                 # z0, alpha, beta = z0s[:, k*Z:(k+1)*Z], alphas[:, k*Z:(k+1)*Z], betas[:, k]
-                z0, alpha, beta = z0s[:, k * n_latent_dim:(k + 1) * n_latent_dim], alphas[:, k], betas[:, k]
+                z0, alpha, beta = z0s[:, k * n_latent_dim:(k + 1) * n_latent_dim], \
+                                  alphas[:, k], betas[:, k]
                 print "z0 shape", z0.get_shape()
                 print "alpha shape", alpha.get_shape()
                 print "beta shape", beta.get_shape()
@@ -81,13 +82,16 @@ class NormalizingRadialFlow(object):
                 print "h_derivative_alpha_r shape", h_derivative_alpha_r.get_shape()
                 print "beta_h_derivative_alpha_r shape", beta_h_derivative_alpha_r.get_shape()
 
-                logdet_jacobian = tf.multiply(((1 + beta_h_alpha_r) ** (n_latent_dim - 1)),
-                                              (1 + beta_h_derivative_alpha_r * r + beta_h_alpha_r))
+                # logdet_jacobian = tf.log(1e-6 + tf.multiply(((1 + beta_h_alpha_r) ** (n_latent_dim - 1)),
+                #                          (1 + h_derivative_alpha_r * r + beta_h_alpha_r)))
+                logdet_jacobian = tf.log(1e-6 + ((1.0 + beta_h_alpha_r) ** (n_latent_dim - 1)) *
+                                                (1.0 + h_derivative_alpha_r * r + beta_h_alpha_r))
+
                 print "logdet_jacobian shape", logdet_jacobian.get_shape()
                 log_detjs.append(tf.expand_dims(logdet_jacobian, 1))
             logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
             print "logdet_jacobian inside Normalizing Radial flow:", logdet_jacobian.get_shape()
-            sum_logdet_jacobian = tf.reduce_sum(logdet_jacobian, axis=1)
+            sum_logdet_jacobian = tf.log(1e-6 + tf.reduce_sum(logdet_jacobian, axis=1))
             print "sum_logdet_jacobian inside Normalizing Radial flow:", sum_logdet_jacobian.get_shape()
             print "z shape", z.get_shape()
         return z, sum_logdet_jacobian

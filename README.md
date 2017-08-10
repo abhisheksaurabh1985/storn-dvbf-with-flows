@@ -23,3 +23,20 @@ A/c to me, the smaller the noise, the better the reconstruction should be.
 Observations:
 06-Aug-2017 - Planar flow - 2017_08_06_16_24_50 - Reconstruction even after 5000 iterations. But sine and velocity were 
 not reconstructed even after 75000 iterations. 
+
+
+# Generation of gif
+pip install moviepy
+Run the script given here: https://gist.github.com/nirum/d4224ad3cd0d71bfef6eba8f3d6ffd59
+You will get the following error:
+
+'''
+NeedDownloadError: Need ffmpeg exe. You can download it by calling:
+  imageio.plugins.ffmpeg.download()
+'''
+
+pip install imageio
+Now: import imageio and then imageio.plugins.ffmpeg.download()
+
+This solution is taken from : 
+https://stackoverflow.com/questions/41402550/raise-needdownloaderrorneed-ffmpeg-exe-needdownloaderror-need-ffmpeg-exe

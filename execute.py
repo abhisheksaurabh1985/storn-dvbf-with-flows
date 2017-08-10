@@ -17,6 +17,7 @@ import time
 import datetime
 import json
 import collections
+import numpy as np
 
 import tensorflow as tf
 from tensorflow.python.framework import ops
@@ -37,7 +38,7 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 20
-learning_rate = 0.0001  # 0.0001
+learning_rate = 0.0001  # 0.0001 for Planar works well.
 training_epochs = 5
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
@@ -98,6 +99,17 @@ if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow":
 # Optimizer
 optimizer = tf.train.AdamOptimizer
 
+# Normalize data
+normalize_data = False
+
+# Output directory for probability distribution and generative samples
+dir_pdist = os.path.join(output_dir, "pdist/")
+if not os.path.exists(dir_pdist):
+    os.makedirs(dir_pdist)
+dir_gs = os.path.join(output_dir, "gs/")
+if not os.path.exists(dir_gs):
+    os.makedirs(dir_gs)
+
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
                                       ('learned_reward', learned_reward), ('n_latent_dim', n_latent_dim),
@@ -114,7 +126,10 @@ parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', 
                                       ('fpath_restore_model', fpath_restore_model),
                                       ('reconstruction_error_function', str(reconstruction_error_function)),
                                       ('models_dir', models_dir), ('logs_path', logs_path),
-                                      ('optimizer', str(optimizer))])
+                                      ('optimizer', str(optimizer)),
+                                      ('normalize_data', normalize_data),
+                                      ('dir_pdist', dir_pdist),
+                                      ('dir_gs', dir_gs)])
 
 # Write hyper-parameters with time-stamp in a file. Also write the same time stamp in the logfile.log
 # experiment_start_time = time.strftime("%c")
@@ -209,7 +224,7 @@ elif flow_type == "NoFlow":
     z_k = z0
 
 # DECODER
-mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
+mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k, _X)  # Shape: (T,B,x_dim)
 var_x_recons = tf.exp(logvar_x_recons)
 x_recons = nne.reparametrize_z(mu_x_recons, var_x_recons)
 
@@ -292,7 +307,9 @@ else:
 
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)
-x_sample = dataset_utils.normalize_data(x_sample)
+if normalize_data:
+    x_sample = dataset_utils.normalize_data(x_sample)
+
 print "x_sample.shape", x_sample.shape
 
 # latent_for_x_sample = nne.get_latent(sess, _X, x_sample)
@@ -313,20 +330,30 @@ def latent_standard_normal_prior(nts, mbs, zdim):
     latent_var = nne.reparametrize_z(mean, variance)
     return mean, variance, latent_var
 
-gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
+gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, 100, n_latent_dim)
 
-gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0)
+gs_x_init = np.zeros((n_timesteps, mb_size, X_dim), dtype=np.float32)
+gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, gs_x_init)
 gs_var_x_recons = tf.exp(gs_logvar_x_recons)
 gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
 
 
-def generative_samples(sess, gs_x_recons):
-    return sess.run(gs_x_recons)
+def generative_samples(sess, gs_x_recons, gs_x_init):
+    return sess.run(gs_x_recons, feed_dict={_X: gs_x_init})
 
-gs_samples = generative_samples(sess, gs_x_recons)
+gs_samples = generative_samples(sess, gs_x_recons, gs_x_init)
+
+
 print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
 print "gs_samples shape:", gs_samples.shape
 print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
+
+# cos_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 0)
+# gs_images_array = plots.helper_functions.get_obs(cos_generative_sample)
+# print "gs_images_array shape:", gs_images_array.shape
+# gs_images_array_prime = np.reshape(gs_images_array, (mb_size, 100, X_dim))
+#
+# plots.helper_functions.create_video(gs_images_array_prime, save_path="/home/abhishek/Desktop/")
 
 # PLOTS
 # Prepare data for plotting
@@ -357,50 +384,30 @@ generative_signals = [cos_generative_sample, sine_generative_sample, w_generativ
 plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals, flow_type,
                                              output_dir, points_to_plot)
 
+plots.plots.plot_generative_samples(time_steps, generative_signals, flow_type, output_dir)
+
+
+# gs_cos = np.concatenate((np.expand_dims(cos_generative_sample[:, 0], 1),
+#                          np.expand_dims(range(n_timesteps), 1)), axis=1)
+# print gs_cos.shape
+
+# Plot probability distributions of the reconstruction and actual
+plots.plots.distribution_signals(x_sample, dir_pdist, flow_type, signal="actual")
+plots.plots.distribution_signals(x_reconstructed, dir_pdist, flow_type, signal="recons")
+plots.plots.distribution_signals(gs_samples, dir_pdist, flow_type, signal="gs")
+
 sess.close()
 
 
-###########################
-# Generative Sampling
-###########################
-
-# def latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim):
-#     gs_z_mu = tf.zeros(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
-#                        name="z_mu_generative_sampling")
-#     gs_z_var = tf.ones(shape=[n_timesteps, mb_size, n_latent_dim], dtype=tf.float32,
-#                        name="z_var_generative_sampling")
-#     gs_z0 = nne.reparametrize_z(gs_z_mu, gs_z_var)
-#     return gs_z_mu, gs_z_var, gs_z0
-#
-# gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
-#
-# gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0)
-# gs_var_x_recons = tf.exp(gs_logvar_x_recons)
-# gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
-#
-#
-# def generative_samples(sess, gs_x_recons, z_mu, gs_z_mu, z_var, gs_z_var):
-#     return sess.run(gs_x_recons)
-#
-#
-# # def generative_samples(sess, gs_x_recons, z_mu, gs_z_mu, z_var, gs_z_var):
-# #     return sess.run(x_recons, feed_dict={z_mu: gs_z_mu, z_var: gs_z_var})
-#
-# gs_samples = generative_samples(sess, gs_x_recons, z_mu, gs_z_mu, z_var, gs_z_var)
-#
-
-
-# Plot losses sans outliers
-# Specify some other target directory. Else it will overwrite the existing plots.
-# fpath_logfile = './storn_dvbf_with_flows/results_worth_saving/planar_2017_08_06_18_52_19/logfile.log'
+# # Plot losses sans outliers
+# # Specify some other target directory. Else it will overwrite the existing plots.
+# fpath_logfile = './output/no_flow/2017_08_09_16_50_05/logfile.log'
 # fpath_losses_sans_outliers = '/home/abhishek/Desktop/'
 # threshold = 2
 # data = plots.helper_functions.read_loss_logfile(fpath_logfile)
-# data_sans_outlier = plots.helper_functions.remove_outliers(data, threshold=2)
+# data_sans_outlier = plots.helper_functions.remove_outliers(data, m=2)
 # epochs = len(data_sans_outlier[:, 0])
 # avg_re = data_sans_outlier[:, 1]
 # avg_kl = data_sans_outlier[:, 2]
 # avg_elbo = data_sans_outlier[:, 3]
-# plots.plots.plot_losses_for_nf(epochs, avg_re, avg_kl, avg_elbo, flow_type, fpath_losses_sans_outliers)
-
-
+# plots.plots.plot_losses_for_nf(epochs, avg_re, avg_kl, avg_elbo, "no_flow", fpath_losses_sans_outliers)

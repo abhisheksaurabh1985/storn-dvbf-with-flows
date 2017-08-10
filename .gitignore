@@ -13,3 +13,4 @@ results_worth_saving/
 .ipynb_checkpoints/
 # Ignore miscellaneous files
 junk.txt
+generative_sample.py

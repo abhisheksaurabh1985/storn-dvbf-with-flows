@@ -1,11 +1,82 @@
 import os
 import numpy as np
 from matplotlib import pyplot as plt
+from moviepy.editor import ImageSequenceClip
 
 
 def line_plot_2d(x, y):
     plt.plot(x, y)
     return
+
+
+def generate_gif(output_dir, flow_type, array, fps=10, scale=1.0):
+    """
+    NOT IN USE
+    """
+
+    # ensure that the file has the .gif extension
+    filename = os.path.join(output_dir, "_", str(flow_type), "_", "generative_sample.gif")
+
+    # copy into the color dimension if the images are black and white
+    if array.ndim == 3:
+        array = array[..., np.newaxis] * np.ones(3)
+
+    # make the moviepy clip
+    clip = ImageSequenceClip(list(array), fps=fps).resize(scale)
+    clip.write_gif(filename, fps=fps)
+    return clip
+
+
+def distribution_signals(data, dir, flow_type, signal, points_to_plot=[0, 2]):
+    for each_point in points_to_plot:
+        f, axarr = plt.subplots(2, 2)
+        f.set_size_inches(10, 6)
+        f.suptitle("Distribution of values:" + "Instance " + str(each_point) + " in batch\n\n",
+                   fontsize="x-large")
+
+        axarr[0, 0].hist(data[:, each_point, 0].reshape((-1,)))
+        axarr[0, 0].set_title('Cosine')
+
+        axarr[0, 1].hist(data[:, each_point, 1].reshape((-1,)))
+        axarr[0, 1].set_title('Sine')
+
+        axarr[1, 0].hist(data[:, each_point, 2].reshape((-1,)))
+        axarr[1, 0].set_title('Angular Velocity')
+
+        axarr[1, 1].hist(data[:, each_point, 3].reshape((-1,)))
+        axarr[1, 1].set_title('Reward')
+
+        legend_labels = ["Data Distribution"]
+        plt.legend(legend_labels, ncol=len(legend_labels), title="Legend")
+        f.tight_layout()
+        f.savefig(os.path.join(dir, str(each_point) + "_" + str.lower(signal) + "_" + "dist_signals.png"))
+
+
+def plot_generative_samples(time_steps, gs, flow_type=None, output_dir=None,
+                            points_to_plot=[0, 2]):
+    for each_point in points_to_plot:
+        # Four axes, returned as a 2-d array
+        f, axarr = plt.subplots(2, 2)
+        f.set_size_inches(10, 6)
+        f.suptitle("Generative Signals:" + "Instance " + str(each_point) + " in batch\n\n",
+                   fontsize="x-large")
+
+        axarr[0, 0].plot(time_steps, gs[0][:, each_point])
+        axarr[0, 0].set_title('Cosine')
+
+        axarr[0, 1].plot(time_steps, gs[1][:, each_point])
+        axarr[0, 1].set_title('Sine')
+
+        axarr[1, 0].plot(time_steps, gs[2][:, each_point])
+        axarr[1, 0].set_title('Velocity')
+
+        axarr[1, 1].plot(time_steps, gs[3][:, each_point])
+        axarr[1, 1].set_title('Reward')
+
+        legend_labels = ["Generative sample"]
+        plt.legend(legend_labels, ncol=len(legend_labels), title="Legend")
+        f.tight_layout()
+        f.savefig(os.path.join(output_dir, "gs/", str(each_point) + "_" + str.lower(flow_type) + "_" + "gs_signals.png"))
 
 
 def plot_signals_and_reconstructions(time_steps, actual, recons, flow_type=None, output_dir=None,
@@ -14,7 +85,7 @@ def plot_signals_and_reconstructions(time_steps, actual, recons, flow_type=None,
         # Four axes, returned as a 2-d array
         f, axarr = plt.subplots(2, 2)
         f.set_size_inches(10, 6)
-        f.suptitle("Actual, Reconstructed and Generative Signals:" + "Instance " + str(each_point) + " in batch\n\n",
+        f.suptitle("Actual and Reconstructed Signals:" + "Instance " + str(each_point) + " in batch\n\n",
                    fontsize="x-large")
 
         axarr[0, 0].plot(time_steps, actual[0][:, each_point])
@@ -36,7 +107,7 @@ def plot_signals_and_reconstructions(time_steps, actual, recons, flow_type=None,
         legend_labels = ["Actual", "Reconstruction"]
         plt.legend(legend_labels, ncol=len(legend_labels), title="Legend")
         f.tight_layout()
-        f.savefig(os.path.join(output_dir, str(each_point) + "_" + flow_type + "_" + "recons_signals.png"))
+        f.savefig(os.path.join(output_dir, str(each_point) + "_" + str.lower(flow_type) + "_" + "recons_signals.png"))
 
 
 def plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flow_type=None, output_dir=None):

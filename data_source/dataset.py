@@ -102,11 +102,11 @@ if __name__ == '__main__':
     learned_reward = True
     
     X, U = dataset_utils.rollout(env, n_samples, n_timesteps, learned_reward=learned_reward, fn_action=None)
-    X_mean = X.reshape((-1, X.shape[2])).mean(0)
-    X = X - X_mean
-    X_std = X.reshape((-1, X.shape[2])).std(0)
-    X = X / X_std
-    # 4 dimensions and the control signal combined would be the input variable. 
+    # X_mean = X.reshape((-1, X.shape[2])).mean(0)
+    # X = X - X_mean
+    # X_std = X.reshape((-1, X.shape[2])).std(0)
+    # X = X / X_std
+    # # 4 dimensions and the control signal combined would be the input variable.
     # X.shape: (100, 1000, 4); U.shape:(100, 1000,1). The 4 dimensions correspond to
     # cosine and sine of angle alpha, angular velocity and reward. 
     # U is the one dimensional control signal at each time step. 

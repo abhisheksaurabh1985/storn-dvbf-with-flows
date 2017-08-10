@@ -28,6 +28,9 @@ def remove_outliers(data, m=2.):
     """
     Modified z-score. Refer this link: http://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm
     https://stackoverflow.com/questions/11686720/is-there-a-numpy-builtin-to-reject-outliers-from-a-list
+
+    As m increases, less and less outliers are removed.
+
     :param data:
     :param m:
     :return:

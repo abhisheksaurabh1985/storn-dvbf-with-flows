@@ -1,3 +1,6 @@
+TODO: Weekend 13th August
+- Create tables in latex 
+
 TODO: 30-July-2017
 - Save and restore the models
 
@@ -40,3 +43,20 @@ Now: import imageio and then imageio.plugins.ffmpeg.download()
 
 This solution is taken from : 
 https://stackoverflow.com/questions/41402550/raise-needdownloaderrorneed-ffmpeg-exe-needdownloaderror-need-ffmpeg-exe
+
+# Comparison of losses given by different models
+- Standalone script in ./analysis/compare_losses.py. Set up the path to the log files and output directory.
+- Run the script in terminal: python -m analysis.compare_losses. Note that this is a module. That's why there is no '/'
+or '.py' at the end. 
+ 
+# Following are the graphs which ought to be in the final report.
+ - Comparison of losses given by different models. 
+ - Generative signal
+ - Plot showing the actual and reconstructed signals
+ - Distribution of signal values in actual and reconstructed signal (I believe this should go into the appendix and 
+ not in the chapter on results and discussions). 
+ - Link to the video generated from the generative signals. 
+- Table with losses across models.  
+
+
+ 

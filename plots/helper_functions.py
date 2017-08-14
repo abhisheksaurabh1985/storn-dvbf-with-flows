@@ -89,7 +89,6 @@ def get_obs(_obs):
     #                            loc=[0, 2.0], scale=[0.5, 0.9]).prod(1)
     obs = scipy.stats.norm.pdf(np.dot(np.concatenate((xv.ravel()[:, np.newaxis], yv.ravel()[:, np.newaxis]), 1), r)).prod(1)
 
-
     obs += np.random.randn(*obs.shape) * 0.01
     return obs
 
@@ -101,7 +100,7 @@ def make_vid(X, rows=10, cols=10, h=16, w=16):
     return np.array(vid)
 
 
-def create_video(SPL, save_path=None):
+def create_video(SPL, save_path="/home/abhishek/Desktop/"):
     writer = animation.FFMpegWriter(fps=15)
 
     video = make_vid(SPL, rows=10, cols=10, h=16, w=16)

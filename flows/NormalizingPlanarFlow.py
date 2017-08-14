@@ -25,7 +25,7 @@ class NormalizingPlanarFlow(object):
 
     def planar_flow(self, z, flow_params, num_flows, n_latent_dim, invert_condition=True):
         us, ws, bs = flow_params
-        print "us shape:", us.get_shape()
+        print "us shape:", us.get_shape()  # (20,?). ws and bs have the same shape.
         print "ws shape:", ws.get_shape()
         print "bs shape:", bs.get_shape()
         log_detjs = []
@@ -37,7 +37,7 @@ class NormalizingPlanarFlow(object):
             for k in range(num_flows):
                 u, w, b = us[:, k * n_latent_dim:(k + 1) * n_latent_dim], \
                           ws[:, k * n_latent_dim:(k + 1) * n_latent_dim], bs[:, k]
-                print "u shape", u.get_shape()
+                print "u shape", u.get_shape()  # (20,?). w and z have the same shape. b shape:(20,)
                 print "w shape", w.get_shape()
                 print "z shape", z.get_shape()
                 print "b shape", b.get_shape()

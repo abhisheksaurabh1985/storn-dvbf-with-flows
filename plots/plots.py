@@ -9,24 +9,6 @@ def line_plot_2d(x, y):
     return
 
 
-def generate_gif(output_dir, flow_type, array, fps=10, scale=1.0):
-    """
-    NOT IN USE
-    """
-
-    # ensure that the file has the .gif extension
-    filename = os.path.join(output_dir, "_", str(flow_type), "_", "generative_sample.gif")
-
-    # copy into the color dimension if the images are black and white
-    if array.ndim == 3:
-        array = array[..., np.newaxis] * np.ones(3)
-
-    # make the moviepy clip
-    clip = ImageSequenceClip(list(array), fps=fps).resize(scale)
-    clip.write_gif(filename, fps=fps)
-    return clip
-
-
 def distribution_signals(data, dir, flow_type, signal, points_to_plot=[0, 2]):
     for each_point in points_to_plot:
         f, axarr = plt.subplots(2, 2)

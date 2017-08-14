@@ -39,7 +39,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 5
+training_epochs = 4
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -49,10 +49,10 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Planar"  # "Planar", "Radial", "NoFlow"
+flow_type = "ConvolutionPlanar"  # "Planar", "Radial", "NoFlow"
 
 # Flow parameters
-numFlows = 2  # Number of times flow has to be applied.
+numFlows = 8  # Number of times flow has to be applied.
 apply_invertibility_condition = True
 beta = True
 
@@ -66,6 +66,8 @@ elif flow_type == "Radial":
     output_dir = "./output/radial/"
 elif flow_type == "NoFlow":
     output_dir = "./output/no_flow/"
+elif flow_type == "ConvolutionPlanar":
+    output_dir = "./output/conv_planar/"
 
 experiment_start_time = datetime.datetime.now()
 output_dir = os.path.join(output_dir, experiment_start_time.strftime('%Y_%m_%d_%H_%M_%S'))
@@ -87,13 +89,15 @@ elif flow_type == "Radial":
     models_dir = os.path.join(output_dir, "output_models/")
 elif flow_type == "NoFlow":
     models_dir = os.path.join(output_dir, "output_models/")
+elif flow_type == "ConvolutionPlanar":
+    models_dir = os.path.join(output_dir, "output_models/")
 
 # Create directory for output models
 if not os.path.exists(models_dir):
     os.makedirs(models_dir)
 
 # Set up tf_logs directory
-if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow":
+if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow" or flow_type == "ConvolutionPlanar":
     logs_path = './tf_logs/'
 
 # Optimizer
@@ -200,8 +204,8 @@ elif flow_type == "Radial":
         _z_k, _logdet_jacobian = previous_output
         _z0, _z0s, _alphas, _betas = current_input
         _flow_params = (_z0s, _alphas, _betas)
-        _z_k, _logdet_jacobian = currentClass.radial_flow(_z0, _flow_params, numFlows, n_latent_dim,
-                                                          apply_invertibility_condition)
+        _z_k, _logdet_jacobian = currentClass.radial_flow_modified(_z0, _flow_params, numFlows, n_latent_dim,
+                                                                   apply_invertibility_condition)
         return _z_k, _logdet_jacobian
 
 
@@ -224,7 +228,7 @@ elif flow_type == "NoFlow":
     z_k = z0
 
 # DECODER
-mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k, _X)  # Shape: (T,B,x_dim)
+mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
 var_x_recons = tf.exp(logvar_x_recons)
 x_recons = nne.reparametrize_z(mu_x_recons, var_x_recons)
 
@@ -319,42 +323,6 @@ x_reconstructed = nne.reconstruct(sess, _X, x_sample)
 print "x_reconstructed type", type(x_reconstructed)
 print "x_reconstructed shape", x_reconstructed.shape
 
-# GENERATIVE SAMPLES
-
-
-def latent_standard_normal_prior(nts, mbs, zdim):
-    mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
-                    name="z_mu_generative_sampling")
-    variance = tf.ones(shape=[nts, mbs, zdim], dtype=tf.float32,
-                       name="z_var_generative_sampling")
-    latent_var = nne.reparametrize_z(mean, variance)
-    return mean, variance, latent_var
-
-gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, 100, n_latent_dim)
-
-gs_x_init = np.zeros((n_timesteps, mb_size, X_dim), dtype=np.float32)
-gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, gs_x_init)
-gs_var_x_recons = tf.exp(gs_logvar_x_recons)
-gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
-
-
-def generative_samples(sess, gs_x_recons, gs_x_init):
-    return sess.run(gs_x_recons, feed_dict={_X: gs_x_init})
-
-gs_samples = generative_samples(sess, gs_x_recons, gs_x_init)
-
-
-print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
-print "gs_samples shape:", gs_samples.shape
-print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
-
-# cos_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 0)
-# gs_images_array = plots.helper_functions.get_obs(cos_generative_sample)
-# print "gs_images_array shape:", gs_images_array.shape
-# gs_images_array_prime = np.reshape(gs_images_array, (mb_size, 100, X_dim))
-#
-# plots.helper_functions.create_video(gs_images_array_prime, save_path="/home/abhishek/Desktop/")
-
 # PLOTS
 # Prepare data for plotting
 cos_actual = plots.helper_functions.sliceFrom3DTensor(x_sample, 0)
@@ -369,45 +337,72 @@ w_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 2)  # Angul
 reward_recons = plots.helper_functions.sliceFrom3DTensor(x_reconstructed, 3)
 print cos_recons.shape, sine_recons.shape, w_recons.shape, reward_recons.shape
 
-cos_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 0)
-sine_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 1)
-w_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 2)  # Angular velocity omega
-reward_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 3)
-print cos_generative_sample.shape, sine_generative_sample.shape, w_generative_sample.shape, reward_generative_sample.shape
-
 # Plot cosine: actual, reconstruction and generative sampling
 time_steps = range(n_timesteps)
 actual_signals = [cos_actual, sine_actual, w_actual, reward_actual]
 recons_signals = [cos_recons, sine_recons, w_recons, reward_recons]
-generative_signals = [cos_generative_sample, sine_generative_sample, w_generative_sample, reward_generative_sample]
-
 plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals, flow_type,
                                              output_dir, points_to_plot)
 
-plots.plots.plot_generative_samples(time_steps, generative_signals, flow_type, output_dir)
+# Plot probability distributions of the reconstruction and actual
+plots.plots.distribution_signals(x_sample, dir_pdist, flow_type, signal="actual")
+plots.plots.distribution_signals(x_reconstructed, dir_pdist, flow_type, signal="recons")
 
+
+# GENERATIVE SAMPLES
+
+
+def latent_standard_normal_prior(nts, mbs, zdim):
+    mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
+                    name="z_mu_generative_sampling")
+    variance = tf.ones(shape=[nts, mbs, zdim], dtype=tf.float32,
+                       name="z_var_generative_sampling")
+    latent_var = nne.reparametrize_z(mean, variance)
+    return mean, variance, latent_var
+
+gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
+
+# gs_x_init = np.zeros((n_timesteps, mb_size, X_dim), dtype=np.float32)
+gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0)
+gs_var_x_recons = tf.exp(gs_logvar_x_recons)
+gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
+
+
+def generative_samples(sess, gs_x_recons):
+    return sess.run(gs_x_recons)
+
+gs_samples = generative_samples(sess, gs_x_recons)
+#
+#
+# print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
+print "gs_samples shape:", gs_samples.shape
+# print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
+pickle.dump(gs_samples, open(os.path.join(dir_gs, 'gs_samples.pkl'), "wb"))
+
+sess.close()
+
+
+# cos_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 0)
+# gs_images_array = plots.helper_functions.get_obs(cos_generative_sample)
+# print "gs_images_array shape:", gs_images_array.shape
+# gs_images_array_prime = np.reshape(gs_images_array, (mb_size, 100, X_dim))
+#
+# plots.helper_functions.create_video(gs_images_array_prime, save_path="/home/abhishek/Desktop/")
+
+# cos_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 0)
+# sine_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 1)
+# w_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 2)  # Angular velocity omega
+# reward_generative_sample = plots.helper_functions.sliceFrom3DTensor(gs_samples, 3)
+# print cos_generative_sample.shape, sine_generative_sample.shape, w_generative_sample.shape, reward_generative_sample.shape
+
+# generative_signals = [cos_generative_sample, sine_generative_sample, w_generative_sample, reward_generative_sample]
+
+
+# plots.plots.plot_generative_samples(time_steps, generative_signals, flow_type, output_dir)
 
 # gs_cos = np.concatenate((np.expand_dims(cos_generative_sample[:, 0], 1),
 #                          np.expand_dims(range(n_timesteps), 1)), axis=1)
 # print gs_cos.shape
 
-# Plot probability distributions of the reconstruction and actual
-plots.plots.distribution_signals(x_sample, dir_pdist, flow_type, signal="actual")
-plots.plots.distribution_signals(x_reconstructed, dir_pdist, flow_type, signal="recons")
-plots.plots.distribution_signals(gs_samples, dir_pdist, flow_type, signal="gs")
+# plots.plots.distribution_signals(gs_samples, dir_pdist, flow_type, signal="gs")
 
-sess.close()
-
-
-# # Plot losses sans outliers
-# # Specify some other target directory. Else it will overwrite the existing plots.
-# fpath_logfile = './output/no_flow/2017_08_09_16_50_05/logfile.log'
-# fpath_losses_sans_outliers = '/home/abhishek/Desktop/'
-# threshold = 2
-# data = plots.helper_functions.read_loss_logfile(fpath_logfile)
-# data_sans_outlier = plots.helper_functions.remove_outliers(data, m=2)
-# epochs = len(data_sans_outlier[:, 0])
-# avg_re = data_sans_outlier[:, 1]
-# avg_kl = data_sans_outlier[:, 2]
-# avg_elbo = data_sans_outlier[:, 3]
-# plots.plots.plot_losses_for_nf(epochs, avg_re, avg_kl, avg_elbo, "no_flow", fpath_losses_sans_outliers)

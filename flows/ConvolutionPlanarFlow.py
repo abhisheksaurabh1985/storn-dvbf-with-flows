@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 
@@ -73,16 +74,27 @@ class ConvolutionPlanarFlow(object):
 
                 # Step 4: d(f*g)/dx = f * dg/dx. Here, dg/dx == 1.
                 psi = self.dtanh(wzb) * self.conv1d(tf.ones_like(z, name="ones_for_convolving_with_w"), w)
+                # psi = self.conv1d(self.dtanh(wzb), w)
+                # psi = self.dtanh(wzb) * w
                 print "psi shape:", psi.get_shape()
 
-                # Step 5:
+                # Step 5: Because it's a dyadic product
                 psi_ut = tf.matmul(tf.transpose(u, perm=[0, 2, 1]), psi, name="psi_u")  # psi_u:(?, 2, 2)
-                print "psi_u shape:", psi_ut.get_shape()
+                print "psi_ut shape:", psi_ut.get_shape()
 
                 # Step 6:
-                logdet_jacobian = tf.log(tf.abs(1 + psi_ut) + 1e-10)  # logdet_jacobian shape: (?, 2, 2)
+                # logdet_jacobian = tf.log(tf.abs(1 + psi_ut) + 1e-10)  # logdet_jacobian shape: (?, 2, 2)
+                singular_value = tf.stop_gradient(tf.svd(psi_ut, compute_uv=False))
+                print "singular_value shape:", singular_value.get_shape()
+                # tf.stop_gradient(singular_value, name="stop_gradient_svd")
+                # singular_value = np.linalg.svd(psi_ut, compute_uv=0)
+                logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10), axis=1)
                 print "logdet_jacobian shape:", logdet_jacobian.get_shape()
-                log_detjs.append(logdet_jacobian)
+                # _logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10))
+                # print "_logdet_jacobian shape:", _logdet_jacobian.get_shape()
+
+                print "logdet_jacobian shape:", logdet_jacobian.get_shape()
+                log_detjs.append(tf.expand_dims(logdet_jacobian, axis=1))
             logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)  # Concatenated vertically
             print "logdet_jacobian inside Normalizing Planar flow:", logdet_jacobian.get_shape()
             sum_logdet_jacobian = tf.reduce_sum(logdet_jacobian)

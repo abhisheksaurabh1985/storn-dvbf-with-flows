@@ -28,6 +28,14 @@ def inputs(D, Z, time_steps):
 
 
 def initialize_weights_random_normal(dim1, dim2, mu, sigma):
+    """
+
+    :param dim1: Number of rows
+    :param dim2: Number of columns
+    :param mu:
+    :param sigma:
+    :return:
+    """
     return tf.random_normal((dim1, dim2), mean=mu, stddev=sigma)
 
 

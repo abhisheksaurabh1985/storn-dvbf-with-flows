@@ -49,10 +49,10 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "ConvolutionPlanar"  # "Planar", "Radial", "NoFlow"
+flow_type = "ConvolutionPlanar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
-numFlows = 8  # Number of times flow has to be applied.
+numFlows = 4  # Number of times flow has to be applied.
 apply_invertibility_condition = True
 beta = True
 
@@ -113,6 +113,9 @@ if not os.path.exists(dir_pdist):
 dir_gs = os.path.join(output_dir, "gs/")
 if not os.path.exists(dir_gs):
     os.makedirs(dir_gs)
+
+filter_width = 3
+
 
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
@@ -224,6 +227,12 @@ elif flow_type == "Radial":
                                     name="apply_flow")
     # sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
     sum_logdet_jacobian = _logdet_jacobian
+elif flow_type == "ConvolutionPlanar":
+    currentClass = ConvolutionPlanarFlow.ConvolutionPlanarFlow(z0, n_latent_dim)
+
+    z_k, sum_logdet_jacobian = currentClass.convolution_planar_flow(tf.transpose(z0, perm=[1, 0, 2]),
+                                                                    flow_params, numFlows, n_latent_dim,
+                                                                    filter_width=3)
 elif flow_type == "NoFlow":
     z_k = z0
 
@@ -244,6 +253,15 @@ if flow_type == "Planar":
     solver = optimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
     # solver = tf.train.AdamOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
     # solver = tf.train.RMSPropOptimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+elif flow_type == "ConvolutionPlanar":
+    global_step = tf.Variable(0, trainable=False)
+    loss_op, summary_losses, probability_distributions = \
+        losses.loss_functions.elbo_loss(_X, x_recons, beta, global_step,
+                                        reconstruction_error_function, z_mu=z_mu, z_var=z_var,
+                                        z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian,
+                                        decoder_mean=mu_x_recons, decoder_variance=var_x_recons)
+    # The second element of the loss_op tuple is the elbo loss.
+    solver = optimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
 elif flow_type == "Radial":
     global_step = tf.Variable(0, trainable=False)
     loss_op, summary_losses, probability_distributions = \
@@ -288,6 +306,10 @@ if not restore_model:
 
     # TRAINING
     if flow_type == "Planar":
+        average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
+                                      solver, training_epochs, n_samples, mb_size,
+                                      display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+    elif flow_type == "ConvolutionPlanar":
         average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
                                       solver, training_epochs, n_samples, mb_size,
                                       display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)

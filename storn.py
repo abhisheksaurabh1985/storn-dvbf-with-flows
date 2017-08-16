@@ -6,7 +6,7 @@ import tensorflow as tf
 class STORN(object):
     def __init__(self, data_dim, time_steps, n_hidden_units_enc, n_hidden_units_dec, n_latent_dim, batch_size,
                  learning_rate=0.001, flow_type="NoFlow", num_flows=None, mu_init=0, sigma_init=0.00001,
-                 decoder_output_function=tf.identity, activation_function=tf.nn.relu):
+                 decoder_output_function=tf.identity, activation_function=tf.nn.relu, filter_width=3):
         self.data_dim = data_dim
         self.time_steps = time_steps
         self.n_hidden_units_enc = n_hidden_units_enc
@@ -21,6 +21,7 @@ class STORN(object):
         self.num_flows = num_flows  # Number of times flow will be applied
         self.decoder_output_function = decoder_output_function
         self.activation_function = activation_function
+        self.filter_width = filter_width
 
         # Initializers for encoder parameters
         self.init_wxhe = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
@@ -109,6 +110,26 @@ class STORN(object):
                                                                               self.sigma_init)
             self.init_b_betas = nn_utilities.initialize_bias_with_zeros(self.num_flows)
 
+        if self.flow_type == "ConvolutionPlanar":
+            self.init_w_us = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                           self.num_flows * self.n_latent_dim,
+                                                                           self.mu_init,
+                                                                           self.sigma_init)
+            self.init_b_us = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.n_latent_dim)
+            # self.init_w_ws = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+            #                                                                self.num_flows * self.filter_width * self.n_latent_dim * self.n_latent_dim,
+            #                                                                self.mu_init,
+            #                                                                self.sigma_init)
+            # self.init_w_ws = nn_utilities.initialize_weights_random_normal(self.num_flows * self.filter_width * self.n_latent_dim * self.n_latent_dim, 1,
+            #                                                                self.mu_init,
+            #                                                                self.sigma_init)
+            # self.init_b_ws = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.filter_width * self.n_latent_dim * self.n_latent_dim)
+            self.init_w_bs = nn_utilities.initialize_weights_random_normal(self.n_hidden_units_enc,
+                                                                           self.num_flows * self.n_latent_dim,
+                                                                           self.mu_init,
+                                                                           self.sigma_init)
+            self.init_b_bs = nn_utilities.initialize_bias_with_zeros(self.num_flows * self.n_latent_dim)
+
         with tf.variable_scope('encoder_rnn'):
             self.W_xhe = tf.Variable(initial_value=self.init_wxhe, name="W_xhe", dtype=tf.float32)
             self.W_hhe = tf.Variable(initial_value=self.init_whhe, name="W_hhe", dtype=tf.float32)
@@ -134,7 +155,17 @@ class STORN(object):
                     self.b_alphas = tf.Variable(initial_value=self.init_b_alphas, name="b_alphas", dtype=tf.float32)
                     self.W_betas = tf.Variable(initial_value=self.init_w_betas, name="W_betas", dtype=tf.float32)
                     self.b_betas = tf.Variable(initial_value=self.init_b_betas, name="b_betas", dtype=tf.float32)
-            elif self.flow_type
+            elif self.flow_type == "ConvolutionPlanar":
+                with tf.variable_scope("encoder_nf_convolution_planar"):
+                    self.W_us = tf.Variable(initial_value=self.init_w_us, name="W_us", dtype=tf.float32)
+                    self.b_us = tf.Variable(initial_value=self.init_b_us, name="b_us", dtype=tf.float32)
+                    # self.W_filter parameter will be learnt independent of data.
+                    self.W_filter = tf.Variable(tf.random_normal([1, self.num_flows * self.filter_width *
+                                                                  self.n_latent_dim * self.n_latent_dim]),
+                                                name="W_filter", dtype=tf.float32)
+                    # self.b_filter = tf.Variable(initial_value=self.init_b_ws, name="b_ws", dtype=tf.float32)
+                    self.W_bs = tf.Variable(initial_value=self.init_w_bs, name="W_bs", dtype=tf.float32)
+                    self.b_bs = tf.Variable(initial_value=self.init_b_bs, name="b_bs", dtype=tf.float32)
 
         # Parameters of the decoder network
         with tf.variable_scope('decoder_rnn'):
@@ -262,7 +293,39 @@ class STORN(object):
             self.bs = tf.reshape(tf.transpose(self.bs),
                                  (self.time_steps, self.batch_size, -1),
                                  name="reshaped_planar_nf_bs")  # Shape:(timeSteps, miniBatchSize, z_dim)
+            print "self.us shape:", self.us.get_shape
+            print "self.ws shape:", self.ws.get_shape
+            print "self.bs shape:", self.bs.get_shape
+            planar_flow_params = (self.us, self.ws, self.bs)
+            return self.mu_encoder, self.log_sigma_encoder, planar_flow_params
 
+        elif self.flow_type == "ConvolutionPlanar":
+            # Parameters of the distribution
+            self.mu_encoder = tf.tensordot(self.W_hmu, _states, axes=[[1], [1]], name="mu_encoder")
+            self.mu_encoder = tf.reshape(tf.transpose(self.mu_encoder),
+                                         (self.time_steps, self.batch_size, -1),
+                                         name="reshaped_mu_encoder")  # Shape:(timeSteps, miniBatchSize, z_dim)
+            self.log_sigma_encoder = tf.tensordot(self.W_hsigma, _states,
+                                                  axes=[[1], [1]],
+                                                  name="log_sigma_encoder")  # Shape:(z_dim,timeSteps*miniBatchSize)
+            self.log_sigma_encoder = tf.reshape(tf.transpose(self.log_sigma_encoder),
+                                                (self.time_steps, self.batch_size, -1),
+                                                name="reshaped_log_sigma_encoder")  # Shape:(timeSteps,miniBatchSize,z_dim)
+            # Planar normalizing flow parameters
+            self.us = tf.tensordot(self.W_us, _states, axes=[[0], [1]], name="conv_nf_us")
+            self.us = tf.reshape(tf.transpose(self.us),
+                                 (self.time_steps, self.batch_size, -1),
+                                 name="reshaped_conv_nf_us")  # Shape:(timeSteps, miniBatchSize, z_dim)
+            # self.ws = tf.tensordot(self.W_filter, _states, axes=[[0], [1]], name="conv_nf_ws")
+            # self.ws = tf.reshape(tf.transpose(self.ws),
+            #                      (self.time_steps, self.batch_size, -1),
+            #                      name="reshaped_conv_nf_ws")  # Shape:(timeSteps, miniBatchSize, k*filter_width*nz*nz)
+            # self.ws = self.ws[-1, :, :]  # Take the last time step as self.ws
+            self.ws = self.W_filter
+            self.bs = tf.tensordot(self.W_bs, _states, axes=[[0], [1]], name="conv_nf_bs")
+            self.bs = tf.reshape(tf.transpose(self.bs),
+                                 (self.time_steps, self.batch_size, -1),
+                                 name="reshaped_conv_nf_bs")  # Shape:(timeSteps, miniBatchSize, z_dim)
             planar_flow_params = (self.us, self.ws, self.bs)
             return self.mu_encoder, self.log_sigma_encoder, planar_flow_params
         elif self.flow_type == "Radial":

@@ -40,6 +40,7 @@ class NormalizingPlanarFlow(object):
                 print "u shape", u.get_shape()  # (20,?). w and z have the same shape. b shape:(20,)
                 print "w shape", w.get_shape()
                 print "z shape", z.get_shape()
+                print "#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@"
                 print "b shape", b.get_shape()
                 if invert_condition:
                     uw = tf.reduce_sum(tf.multiply(w, u), axis=1, keep_dims=True)  # u: (?,2), w: (?,2), b: (?,)
@@ -67,9 +68,11 @@ class NormalizingPlanarFlow(object):
                 psi = tf.reshape((1 - self.tanh(zwb) ** 2), [-1, 1]) * w  # Equation 11. # tanh(x)dx = 1 - tanh(x)**2
                 # psi= tf.reduce_sum(tf.matmul(tf.transpose(1-self.tanh(zwb)**2), self.w))
                 psi_u = tf.reduce_sum(tf.multiply(u_hat, psi), axis=1, keep_dims=True)
+                print "psi_u shape:", psi_u.get_shape()
                 # psi_u= tf.matmul(tf.transpose(u_hat), tf.transpose(psi))
                 # Second term in equation 12. u_transpose*psi_z
                 logdet_jacobian = tf.log(tf.abs(1 + psi_u) + 1e-10)  # Equation 12
+                print "logdet_jacobian shape:", logdet_jacobian.get_shape()
                 # logdet_jacobian = tf.log(tf.clip_by_value(tf.abs(1 + psi_u), 1e-4, 1e7))  # Equation 12
                 # print "f_z shape", f_z.get_shape()
                 log_detjs.append(logdet_jacobian)

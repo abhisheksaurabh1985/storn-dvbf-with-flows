@@ -1,3 +1,4 @@
 import NormalizingPlanarFlow
 import NormalizingRadialFlow
+import ConvolutionPlanarFlow
 

@@ -129,7 +129,6 @@ dir_image_grid_from_actual_data = "./actual_data_as_image/gif/"
 if not os.path.exists(dir_image_grid_from_actual_data):
     os.makedirs(dir_image_grid_from_actual_data)
 
-
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
                                       ('learned_reward', learned_reward), ('n_latent_dim', n_latent_dim),

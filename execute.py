@@ -37,8 +37,8 @@ learned_reward = True  # is the reward handled as observation?
 n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
-mb_size = 20
-learning_rate = 0.0001  # 0.0001 for Planar works well.
+mb_size = 128
+learning_rate = 0.00001  # 0.0001 for Planar works well.
 training_epochs = 4
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
@@ -149,7 +149,10 @@ parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', 
                                       ('optimizer', str(optimizer)),
                                       ('normalize_data', normalize_data),
                                       ('dir_pdist', dir_pdist),
-                                      ('dir_gs', dir_gs)])
+                                      ('dir_gs', dir_gs), ('filter_width', filter_width),
+                                      ('dir_actual_data_as_image', dir_actual_data_as_image),
+                                      ('dir_gif_from_actual_data', dir_gif_from_actual_data),
+                                      ('dir_image_grid_from_actual_data', dir_image_grid_from_actual_data)])
 
 # Write hyper-parameters with time-stamp in a file. Also write the same time stamp in the logfile.log
 # experiment_start_time = time.strftime("%c")

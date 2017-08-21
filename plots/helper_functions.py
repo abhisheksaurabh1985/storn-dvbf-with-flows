@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 # from matplotlib import animation, rc
 # rc('animation', html='html5')
 import os
-from scipy.misc import imsave
 
 
 def sliceFrom3DTensor(tensor, idx):
@@ -74,50 +73,6 @@ def read_loss_logfile(fname):
     return losses_per_epoch
 
 
-def get_obs(_obs):
-    """
-    cos and sine theta as inputs.
-    :param _obs:
-    :return:
-    """
-    image_dims = [16, 16]
-    x = np.linspace(-4, 4, image_dims[0])
-    y = np.linspace(-4, 4, image_dims[1])
-    xv, yv = np.meshgrid(x, y)
-    r = np.array([[_obs[0], -_obs[1]], [_obs[1], _obs[0]]])
-
-    obs = scipy.stats.norm.pdf(np.dot(np.concatenate((xv.ravel()[:, np.newaxis], yv.ravel()[:, np.newaxis]), 1), r),
-                                loc=[0, 2.0], scale=[0.5, 0.9]).prod(1)
-    obs += np.random.randn(*obs.shape) * 0.01
-    return obs
-
-
-def make_images(data, output_dir, img_width=16, img_height=16):
-    """
-    Create images from numpy array and save it for generating GIFs.
-    """
-    print data.shape[0]
-    time_steps = range(data.shape[0])
-    for time_step in time_steps:
-        print time_step
-        img_arr = np.reshape(data[time_step, :], (img_width, img_height))
-        # img = Image.fromarray(img_arr, 'RGB')
-        # output_dir = os.path.join(output_dir, 'ts_' + str(time_step) + '.png')
-        # print output_dir
-        # print type(output_dir)
-        # img.save(output_dir)
-        imsave(os.path.join(output_dir, 'ts_' + str(time_step) + '.png'), img_arr)
-        # img.show()
-
-
-def generate_gif(dirname):
-    """
-    Generate gif from images
-    :param dirname:
-    :return:
-    """
-    os.system('convert -delay 50 -loop 0 {0}/ts_*png {0}/gs.gif'.format(dirname))
-    return
 
 
 

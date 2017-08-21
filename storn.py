@@ -160,8 +160,11 @@ class STORN(object):
                     self.W_us = tf.Variable(initial_value=self.init_w_us, name="W_us", dtype=tf.float32)
                     self.b_us = tf.Variable(initial_value=self.init_b_us, name="b_us", dtype=tf.float32)
                     # self.W_filter parameter will be learnt independent of data.
+                    # self.W_filter = tf.Variable(tf.random_normal([1, self.num_flows * self.filter_width *
+                    #                                               self.n_latent_dim * self.n_latent_dim]),
+                    #                             name="W_filter", dtype=tf.float32)
                     self.W_filter = tf.Variable(tf.random_normal([1, self.num_flows * self.filter_width *
-                                                                  self.n_latent_dim * self.n_latent_dim]),
+                                                                  self.n_latent_dim * 1]),
                                                 name="W_filter", dtype=tf.float32)
                     # self.b_filter = tf.Variable(initial_value=self.init_b_ws, name="b_ws", dtype=tf.float32)
                     self.W_bs = tf.Variable(initial_value=self.init_w_bs, name="W_bs", dtype=tf.float32)

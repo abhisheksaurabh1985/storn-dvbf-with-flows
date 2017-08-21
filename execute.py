@@ -39,7 +39,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 100
+training_epochs = 4
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -115,6 +115,19 @@ if not os.path.exists(dir_gs):
     os.makedirs(dir_gs)
 
 filter_width = 3
+
+dir_actual_data_as_image = "./actual_data_as_image/"
+if not os.path.exists(dir_actual_data_as_image):
+    os.makedirs(dir_actual_data_as_image)
+
+dir_gif_from_actual_data = "./actual_data_as_image/gif/"
+if not os.path.exists(dir_gif_from_actual_data):
+    os.makedirs(dir_gif_from_actual_data)
+
+
+dir_image_grid_from_actual_data = "./actual_data_as_image/gif/"
+if not os.path.exists(dir_image_grid_from_actual_data):
+    os.makedirs(dir_image_grid_from_actual_data)
 
 
 # Store the parameters in a dictionary
@@ -229,7 +242,8 @@ elif flow_type == "Radial":
     sum_logdet_jacobian = _logdet_jacobian
 elif flow_type == "ConvolutionPlanar":
     currentClass = ConvolutionPlanarFlow.ConvolutionPlanarFlow(z0, n_latent_dim)
-
+    print "z0 shape:", z0.get_shape()
+    print "z0 transposed shape:", tf.transpose(z0, perm=[1, 0, 2]).get_shape()
     z_k, sum_logdet_jacobian = currentClass.convolution_planar_flow(tf.transpose(z0, perm=[1, 0, 2]),
                                                                     flow_params, numFlows, n_latent_dim,
                                                                     filter_width=3)
@@ -429,59 +443,3 @@ sess.close()
 # plots.plots.distribution_signals(gs_samples, dir_pdist, flow_type, signal="gs")
 
 
-"""
-Plot of images of the actual signal
-"""
-import pickle
-import os
-from os.path import isfile, join
-import numpy as np
-import scipy.stats
-from PIL import Image
-
-from data_source.dataset import Datasets, Dataset
-from data_source import dataset_utils
-
-# XU = pickle.load(open('./pickled_data/XU.pkl', "rb"))
-# shuffled_data = pickle.load(open('./pickled_data/shuffled_data.pkl', "rb"))
-datasets = pickle.load(open('./pickled_data/datasets.pkl', "rb"))
-
-data = datasets.train.next_batch(99)
-
-images = []
-
-for co, si in data[:, :, :2].reshape((-1, 2)):
-    image = plots.helper_functions.get_obs([co, si])  # image.shape:(256,)
-    images.append(image)  # Final len(images)= 10000
-
-images_arr = np.array(images).reshape((100, 99, -1))  # images_arr shape: (100,100,256)
-
-dir_actual_data_images = '/home/abhishek/Desktop/Junk/test_gs/'
-# dir_actual_data_images = os.path.join('/home/abhishek/Desktop/Junk/test_gs/', 'ts_' + str(time_step) + '.png')
-plots.helper_functions.make_images(images_arr[:, 0, :], dir_actual_data_images)  # For the 0th instance in the batch.
-
-dir_gif_actual_data = '/home/abhishek/Desktop/Junk/test_gs/gif'
-plots.helper_functions.generate_gif(dir_gif_actual_data)
-
-
-
-"""
-https://stackoverflow.com/questions/20038648/writting-a-file-with-multiple-images-in-a-grid
-"""
-
-# files = [f for f in os.listdir("/home/abhishek/Desktop/Junk/test_gs/")
-# if isfile(join("/home/abhishek/Desktop/Junk/test_gs/", f)) ]
-files = [f for f in os.listdir(dir_actual_data_images) if isfile(join(dir_actual_data_images, f))]
-
-file_actual_data_images = os.path.join(dir_gif_actual_data, "/" + "grid_image.png")
-new_im = Image.new('L', (160, 160))
-
-index = 0
-for i in xrange(0, 160, 16):
-    for j in xrange(0, 160, 16):
-        im = Image.open(os.path.join(dir_actual_data_images, files[index]))
-        im.thumbnail((16, 16))
-        new_im.paste(im, (i, j))
-        index += 1
-
-new_im.save(file_actual_data_images)

@@ -56,7 +56,15 @@ or '.py' at the end.
  - Distribution of signal values in actual and reconstructed signal (I believe this should go into the appendix and 
  not in the chapter on results and discussions). 
  - Link to the video generated from the generative signals. 
-- Table with losses across models.  
-
-
+- Table with losses across models. 
+ 
+ 
+Tips on running the script on another machine.
+- #1
+*Problem:* Issue with imageio
+'''
+imageio.core.fetching.NeedDownloadError: Need ffmpeg exe. You can download it by calling:
+ imageio.plugins.ffmpeg.download()
+''' 
+*Solution:* Open python in console. Run ```imageio.plugins.ffmpeg.download()```
  

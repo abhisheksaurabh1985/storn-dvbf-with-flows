@@ -22,6 +22,12 @@ TODO: 05-Aug-2017
 - Play with the amount of noise. Noise does not have to be a standard normal. It serves as a discretization parameter. 
 A/c to me, the smaller the noise, the better the reconstruction should be. 
 
+TODO: 21-Aug-2017
+- Reshape the filter as (3,2,1) and then swap the elements as is done in case of back propagation through convolution.
+- Another approach similar to NICE can be tried as well. In this case, instead of taking the entire time sequence, we
+can take a chunk of varying length and then combine the results. A/c to Max this wouldn't require much of effort in terms
+of implementation. 
+
 
 Observations:
 06-Aug-2017 - Planar flow - 2017_08_06_16_24_50 - Reconstruction even after 5000 iterations. But sine and velocity were 

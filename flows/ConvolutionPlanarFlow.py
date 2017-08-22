@@ -21,6 +21,13 @@ class ConvolutionPlanarFlow(object):
         return 1.0 - tf.square(tf.tanh(tensor))
 
     @staticmethod
+    def tf_rot180(filtr, ax=[0]):
+        """
+        Rotate filter by 180 degrees.
+        """
+        return tf.reverse(filtr, axis=ax)
+
+    @staticmethod
     def conv1d(z, W, strides=1):
         # Conv1D wrapper
         temp = tf.nn.conv1d(z, W, stride=strides, padding="SAME")
@@ -56,13 +63,15 @@ class ConvolutionPlanarFlow(object):
                 w = tf.reshape(w, shape=[filter_width, n_latent_dim, 1])  # w shape: (1, 6); reshaped w shape: (3, 2, 1)
                 print "reshaped w shape:", w.get_shape()
 
-                # Step 1:
+                # Step 1: Flip the filter by 180 degrees and then convolve. If filter isn't rotated, then tf.nn.conv2d,
+                # which is actually called by tf.nn.conv1d, performs a correlation rather than convolution.
+                # z shape: (bs, ts, ?), w shape: (3, 2, 1)
                 wz = self.conv1d(z, w)  # wz shape: (bs, ts, 1)
                 print "wz shape:", wz.get_shape()
                 print "b with dims expanded:", tf.expand_dims(b, 2)
 
                 # Step 2:
-                # Extend dimension of b
+                # Extend dimension of b. Original b shape: (bs, ts). After expanding dimensions it is (bs, ts, 1).
                 wzb = wz + tf.expand_dims(b, 2)  # wzb shape: (bs, ts, 1)
                 print "wzb shape:", wzb.get_shape()
 
@@ -70,23 +79,22 @@ class ConvolutionPlanarFlow(object):
                 print "tanh(wzb) shape:", tf.nn.tanh(wzb).get_shape()
                 z = z + u * tf.nn.tanh(wzb, name="tanh_wzb")  # transformed z: (bs,ts,?)
                 print "transformed z shape:", z.get_shape()
-                print "dtanh wzb shape:", self.dtanh(wzb).get_shape()  # (20, 100, 1)
+                print "dtanh wzb shape:", self.dtanh(wzb).get_shape()  # (bs, ts, 1)
 
-                # Step 4: Convolution is commutative
-                # Had to reshape w as the number of channels in psi is 1. 2 in w (recall w is (3,2,1)) has to match with
-                # number of input channels.
-                psi = self.conv1d(self.dtanh(wzb), tf.reshape(w, [6, -1, 1]))  # psi shape: (bs, ts, 1)
+                # Step 4: First transpose the filter to match the dimensions of psi. Then rotate it for convolution.
+                # psi shape: (bs, ts, 2)
+                psi = self.conv1d(self.dtanh(wzb), self.tf_rot180(tf.transpose(w, perm=[0, 2, 1])))
                 print "psi shape:", psi.get_shape()
 
-                # Step 5: Because it's a dyadic product
-                # u shape: (20, 100, ?), psi shape: (20, 100, 1), psi_ut:(20, ?, 1)
-                psi_ut = tf.multiply(psi, u, name="psi_ut")  # (bs, ts, ?)
-                # psi_ut = tf.transpose(tf.matmul(tf.transpose(u, perm=[0, 2, 1]), psi, name="psi_u"), perm=[0, 2, 1],
-                #                       name="psi_ut")  # Reshaped from (bs, ?, 1) to (bs, 1, ?).
+                # Step 5:
+                # u shape: (bs, ts, ?), psi shape: (bs, ts, 2), psi_ut:(bs, ts, 2)
+                # psi_ut = tf.multiply(psi, u, name="psi_ut")
+                psi_ut = tf.transpose(tf.matmul(tf.transpose(u, perm=[0, 2, 1]), psi, name="psi_u"), perm=[0, 2, 1],
+                                      name="psi_ut")  # Reshaped from (bs, ?, 1) to (bs, 1, ?).
                 print "psi_ut shape:", psi_ut.get_shape()
 
                 # Step 6:
-                logdet_jacobian = tf.log(tf.abs(1 + psi_ut) + 1e-10)  # logdet_jacobian shape: (20, 1, ?). With tf.multiply (bs, ts, ?).
+                logdet_jacobian = tf.log(tf.abs(1 + psi_ut) + 1e-10)  # logdet_jacobian shape: (bs, ts, 2)
                 # singular_value = tf.stop_gradient(tf.svd(psi_ut, compute_uv=False))
                 # tf.stop_gradient(singular_value, name="stop_gradient_svd")
                 # singular_value = np.linalg.svd(psi_ut, compute_uv=0)
@@ -96,7 +104,8 @@ class ConvolutionPlanarFlow(object):
                 # log_detjs.append(tf.expand_dims(logdet_jacobian, axis=1))
                 log_detjs.append(logdet_jacobian)
                 print "shape of first element in list:", log_detjs[0].get_shape()
-            logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)  # Concatenated vertically, (20, ?, 1). With tf.multiply (32, 400, ?).
+            # Concatenated vertically. Below, logdet_jacobian shape: (bs, numFlows*ts, 2).
+            logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
             print "logdet_jacobian inside Normalizing Planar flow:", logdet_jacobian.get_shape()
             sum_logdet_jacobian = tf.reduce_sum(logdet_jacobian)  # shape: ()
             print "sum_logdet_jacobian inside Normalizing Planar flow:", sum_logdet_jacobian.get_shape()

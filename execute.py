@@ -49,7 +49,7 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "ConvolutionPlanar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "Radial"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 4  # Number of times flow has to be applied.
@@ -128,6 +128,10 @@ if not os.path.exists(dir_gif_from_actual_data):
 dir_image_grid_from_actual_data = "./actual_data_as_image/gif/"
 if not os.path.exists(dir_image_grid_from_actual_data):
     os.makedirs(dir_image_grid_from_actual_data)
+
+dir_saved_variables = os.path.join(output_dir, "saved_vars/")
+if not os.path.exists(dir_saved_variables):
+    os.makedirs(dir_saved_variables)
 
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
@@ -381,6 +385,10 @@ actual_signals = [cos_actual, sine_actual, w_actual, reward_actual]
 recons_signals = [cos_recons, sine_recons, w_recons, reward_recons]
 plots.plots.plot_signals_and_reconstructions(time_steps, actual_signals, recons_signals, flow_type,
                                              output_dir, points_to_plot)
+
+# Dump time_steps, actual and reconstructed signals
+pickle.dump([x_sample, x_reconstructed, time_steps, actual_signals, recons_signals],
+            open(os.path.join(dir_saved_variables, 'saved_vars.pickle'), "wb"))
 
 # Plot probability distributions of the reconstruction and actual
 plots.plots.distribution_signals(x_sample, dir_pdist, flow_type, signal="actual")

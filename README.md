@@ -74,3 +74,7 @@ imageio.core.fetching.NeedDownloadError: Need ffmpeg exe. You can download it by
 ''' 
 *Solution:* Open python in console. Run ```imageio.plugins.ffmpeg.download()```
  
+* Plot of signal distribution*
+- Histograms side by side in the same figure for 0th instance in the batch.
+- Compare no flow, planar, conv flow for no more than 5 bins.   
+ 

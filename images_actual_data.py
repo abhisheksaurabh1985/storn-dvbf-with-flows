@@ -78,13 +78,17 @@ file_actual_data_as_image_grid = os.path.join(dir_image_grid_from_actual_data, "
 
 datasets = pickle.load(open('./pickled_data/datasets.pkl', "rb"))
 data = datasets.train.next_batch(99)
+
+# data = pickle.load(open('./pickled_data/junk_gs_samples.pkl', "rb"))
+
+batch_size = data.shape[1]
 # Get cosine and sine from the dataset to create an array
 images = []
 for co, si in data[:, :, :2].reshape((-1, 2)):
     image = get_obs([co, si])  # image.shape:(256,)
     images.append(image)  # Final len(images)= 10000
 
-images_arr = np.array(images).reshape((100, 99, -1))  # images_arr shape: (100,100,256)
+images_arr = np.array(images).reshape((100, batch_size, -1))  # images_arr shape: (100,100,256)
 
 make_images(images_arr[:, 0, :], dir_actual_data_as_image)  # For the 0th instance in the batch.
 generate_gif(dir_actual_data_as_image, dir_gif_from_actual_data)

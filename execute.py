@@ -40,7 +40,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 500
+training_epochs = 3
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -134,7 +134,7 @@ dir_saved_variables = os.path.join(output_dir, "saved_vars/")
 if not os.path.exists(dir_saved_variables):
     os.makedirs(dir_saved_variables)
 
-model_type = "storn_with_input"
+model_type = "storn_without_input"
 
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
@@ -158,7 +158,8 @@ parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', 
                                       ('dir_gs', dir_gs), ('filter_width', filter_width),
                                       ('dir_actual_data_as_image', dir_actual_data_as_image),
                                       ('dir_gif_from_actual_data', dir_gif_from_actual_data),
-                                      ('dir_image_grid_from_actual_data', dir_image_grid_from_actual_data)])
+                                      ('dir_image_grid_from_actual_data', dir_image_grid_from_actual_data),
+                                      ('model_type', model_type)])
 
 # Write hyper-parameters with time-stamp in a file. Also write the same time stamp in the logfile.log
 # experiment_start_time = time.strftime("%c")
@@ -397,35 +398,46 @@ pickle.dump([x_sample, x_reconstructed, time_steps, actual_signals, recons_signa
 plots.plots.distribution_signals(x_sample, dir_pdist, flow_type, signal="actual")
 plots.plots.distribution_signals(x_reconstructed, dir_pdist, flow_type, signal="recons")
 
-# TODO
 # GENERATIVE SAMPLES
+def latent_standard_normal_prior(nts, mbs, zdim):
+    mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
+                    name="z_mu_generative_sampling")
+    variance = tf.ones(shape=[nts, mbs, zdim], dtype=tf.float32,
+                       name="z_var_generative_sampling")
+    latent_var = nne.reparametrize_z(mean, variance)
+    return mean, variance, latent_var
 
-# if model_type == "storn_without_input":
-#     def latent_standard_normal_prior(nts, mbs, zdim):
-#         mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
-#                         name="z_mu_generative_sampling")
-#         variance = tf.ones(shape=[nts, mbs, zdim], dtype=tf.float32,
-#                            name="z_var_generative_sampling")
-#         latent_var = nne.reparametrize_z(mean, variance)
-#         return mean, variance, latent_var
-#
-#     gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
-#
-#     # gs_x_init = np.zeros((n_timesteps, mb_size, X_dim), dtype=np.float32)  # Dummy input. Not being used.
-#     gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, flow_type)
-#     gs_var_x_recons = tf.exp(gs_logvar_x_recons)
-#     gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
-#
-#
-#     def generative_samples(sess, gs_x_recons):
-#         return sess.run(gs_x_recons)
-#
-#     gs_samples = generative_samples(sess, gs_x_recons)
-#     print "gs_samples shape:", gs_samples.shape
-#     pickle.dump(gs_samples, open(os.path.join(dir_gs, 'gs_samples.pkl'), "wb"))
-# elif model_type == "storn_with_input":
-#     pass
-#
+if model_type == "storn_with_input":
+    gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
+
+    gs_x_init = tf.random_normal([100, X_dim], name="gs_x_init", dtype=tf.float32)  # Initialize x
+
+    gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, model_type, input_x=gs_x_init,
+                                                         operation_type='generative_sampling')
+    gs_var_x_recons = tf.exp(gs_logvar_x_recons)
+    gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
+
+
+    def generative_samples(sess, gs_x_recons):
+        return sess.run(gs_x_recons)
+
+    gs_samples = generative_samples(sess, gs_x_recons)
+    print "gs_samples shape:", gs_samples.shape
+    pickle.dump(gs_samples, open(os.path.join(dir_gs, 'gs_samples.pkl'), "wb"))
+elif model_type == "storn_without_input":
+    gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
+
+    gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, model_type)
+    gs_var_x_recons = tf.exp(gs_logvar_x_recons)
+    gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
+
+
+    def generative_samples(sess, gs_x_recons):
+        return sess.run(gs_x_recons)
+
+    gs_samples = generative_samples(sess, gs_x_recons)
+    print "gs_samples shape:", gs_samples.shape
+    pickle.dump(gs_samples, open(os.path.join(dir_gs, 'gs_samples.pkl'), "wb"))
 
 sess.close()
 

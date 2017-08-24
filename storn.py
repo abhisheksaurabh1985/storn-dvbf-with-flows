@@ -494,7 +494,7 @@ class STORN(object):
                                                 stddev=1,
                                                 name="dec_logvar_recons_init_x")
 
-        if model_type == "storn_without_input":
+        if model_type == "storn_without_input" and 'operation_type' not in kwargs:
             print "model_type", model_type
             _, self.recons_x, self.mu_recons_x, self.logvar_recons_x = tf.scan(self.decoding_step_storn_without_input,
                                                                                z, initializer=(initial_recurrent_state,
@@ -502,7 +502,8 @@ class STORN(object):
                                                                                                mu_recons_init_x,
                                                                                                logvar_recons_init_x),
                                                                                name='recons_x')
-        elif model_type == "storn_with_input":
+
+        elif model_type == "storn_with_input" and 'operation_type' not in kwargs:
             """
             TODO: x has to be shifted backwards. Once changes in this file is made, modify the function call. This one
             has two additional inputs. 
@@ -531,6 +532,27 @@ class STORN(object):
                                                                                                logvar_recons_init_x),
                                                                                name='recons_x')
 
+        elif model_type == "storn_with_input" and kwargs['operation_type'] == 'generative_sampling':
+            """
+            For generative sampling using STORN WITH INPUT CONNECTION from a standard normal distribution and a random 
+            initialization of the input at time step 0. 
+            """
+            _, self.recons_x, self.mu_recons_x, self.logvar_recons_x = \
+                tf.scan(self.generative_sampling_decoding_step_storn_with_input, z,
+                        initializer=(initial_recurrent_state,
+                                     recons_init_x,
+                                     mu_recons_init_x,
+                                     logvar_recons_init_x),
+                        name='generated_x')
+
+        elif model_type == "storn_with_input" and kwargs['operation_type'] == 'generative_sampling':
+            # In this case, same decoding step function can be used.
+            _, self.recons_x, self.mu_recons_x, self.logvar_recons_x = tf.scan(self.decoding_step_storn_without_input,
+                                                                               z, initializer=(initial_recurrent_state,
+                                                                                               recons_init_x,
+                                                                                               mu_recons_init_x,
+                                                                                               logvar_recons_init_x),
+                                                                               name='recons_x')
         print "recons x shape", self.recons_x.get_shape()
         return self.mu_recons_x, self.logvar_recons_x
 
@@ -539,3 +561,23 @@ class STORN(object):
 
     def get_latent(self, sess, x, data):
         return sess.run(self.z, feed_dict={x: data})
+
+    def generative_sampling_decoding_step_storn_with_input(self, previous_output, current_input):
+
+        h_t, x_t, _, _ = previous_output
+        z_t = current_input
+
+        h = tf.transpose(self.activation_function(tf.tensordot(self.W_xh, x_t,
+                                                               axes=[[1], [1]], name="dec_x_h_connection") +
+                                                  tf.tensordot(self.W_hhd, h_t,
+                                                               axes=[[1], [1]], name="dec_h_h_connection") +
+                                                  tf.tensordot(self.W_zh, z_t,
+                                                               axes=[[1], [1]], name="dec_z_h_connection") +
+                                                  self.b_hd), name="decoding_step_h_transposed")
+
+        mu_x = tf.transpose(tf.tensordot(self.W_h_mu_dec, h, axes=[[1], [1]]) + self.b_h_mu,
+                            name="mu_x_decoder")
+        logvar_x = tf.transpose(tf.tensordot(self.W_h_var_dec, h, axes=[[1], [1]]) + self.b_h_var,
+                                name="logvar_x_decoder")
+        x = self.decoder_output_function(mu_x, name="x_recons")
+        return h, x, mu_x, logvar_x

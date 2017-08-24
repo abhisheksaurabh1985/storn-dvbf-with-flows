@@ -1,3 +1,15 @@
+*Results needed*
+- Comparison of all models for a single value of flow say `numFlows=4`. NoFlow, Planar, Radial, Convolution. ETA 24 hours
+each. Total time 4 days. 
+- Comparison of models with planar and convolution flow with different flow lengths. k= 2,4,8,16. ETA is 24 hours each.
+Total time- 8 days 
+- Generative model output
+    - One what Justin has in his paper. Use the actual signal until a certain time step and then plot both the actual 
+    and generative signals. 
+    - Basic one without any comparison, what I already have. This is needed just to ensure that the output is plausible.
+- Additional line in the plots of log(px|zk), log(q0z0), log(qk_zk). 
+ 
+ 
 TODO: Weekend 13th August
 - Create tables in latex 
 

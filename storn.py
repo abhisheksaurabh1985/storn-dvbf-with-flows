@@ -519,9 +519,12 @@ class STORN(object):
             # in the beginning.
             x_slice_1 = tf.slice(x, [0, 0, 0], [self.time_steps-1, self.batch_size, -1])
             print "x_slice_1 shape:", x_slice_1.get_shape()
+            # x_slice_2 = tf.zeros(tf.slice(x, [self.time_steps-1, 0, 0], [1, self.batch_size, -1]), dtype=tf.float32,
+            #                      name="x_slice_2")
             x_slice_2 = tf.slice(x, [self.time_steps-1, 0, 0], [1, self.batch_size, -1])
+
             print "x_slice_2 shape:", x_slice_2.get_shape()
-            x_shifted_backwards = tf.concat([x_slice_1, x_slice_2], 0)
+            x_shifted_backwards = tf.concat([x_slice_2, x_slice_1], 0)
             print "x_shifted_backwards shape:", x_shifted_backwards.get_shape()
 
             _, self.recons_x, self.mu_recons_x, self.logvar_recons_x = tf.scan(self.decoding_step_storn_with_input,
@@ -545,7 +548,7 @@ class STORN(object):
                                      logvar_recons_init_x),
                         name='generated_x')
 
-        elif model_type == "storn_with_input" and kwargs['operation_type'] == 'generative_sampling':
+        elif model_type == "storn_without_input" and kwargs['operation_type'] == 'generative_sampling':
             # In this case, same decoding step function can be used.
             _, self.recons_x, self.mu_recons_x, self.logvar_recons_x = tf.scan(self.decoding_step_storn_without_input,
                                                                                z, initializer=(initial_recurrent_state,

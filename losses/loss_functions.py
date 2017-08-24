@@ -93,7 +93,7 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
 
         # First component of the second term: p(x|z_k)
         if beta:
-            beta_t = tf.minimum(1.0, 0.01 + tf.cast(global_step / 10000, tf.float32))  # global_step
+            beta_t = tf.minimum(1.0, 0.01 + tf.cast(global_step / 100, tf.float32))  # global_step
             log_p_x_given_zk = - beta_t * tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var),
                                                                        axis=2))
             # log_p_zk = beta_t * tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)),

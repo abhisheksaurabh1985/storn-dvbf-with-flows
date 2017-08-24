@@ -50,12 +50,12 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "NoFlow"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "Radial"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
-numFlows = 4  # Number of times flow has to be applied.
+numFlows = 8  # Number of times flow has to be applied.
 apply_invertibility_condition = True
-beta = True
+beta = False
 
 # Plot parameters
 points_to_plot = [0, 2, 4, 6, 8, 10]  # Points in the mini batches which are to be reconstructed and plotted
@@ -134,7 +134,7 @@ dir_saved_variables = os.path.join(output_dir, "saved_vars/")
 if not os.path.exists(dir_saved_variables):
     os.makedirs(dir_saved_variables)
 
-model_type = "storn_without_input"
+model_type = "storn_with_input"
 
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
@@ -410,6 +410,7 @@ def latent_standard_normal_prior(nts, mbs, zdim):
 if model_type == "storn_with_input":
     gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
 
+    # Take the first date point
     gs_x_init = tf.random_normal([100, X_dim], name="gs_x_init", dtype=tf.float32)  # Initialize x
 
     gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, model_type, input_x=gs_x_init,

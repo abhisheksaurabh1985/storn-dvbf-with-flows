@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from matplotlib import pyplot as plt
+plt.style.use('seaborn-deep')
 from moviepy.editor import ImageSequenceClip
 
 
@@ -99,21 +100,21 @@ def plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flo
     # Three separate plots
     range_epochs = range(nepochs)
 
-    plt.figure(0)
+    plt.figure("Average Reconstruction Loss per Epoch")
     plt.plot(range_epochs, avg_recons_loss)
     plt.title("Average Reconstruction Loss per Epoch")
     plt.ylabel("Average Reconstruction Loss")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "recons.png"))
 
-    plt.figure(1)
+    plt.figure("Average KL Loss per Epoch")
     plt.plot(range_epochs, avg_kl_loss)
     plt.title("Average KL Loss per Epoch")
     plt.ylabel("Average KL Loss")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "kl.png"))
 
-    plt.figure(2)
+    plt.figure("Average ELBO per Epoch")
     plt.plot(range_epochs, avg_elbo_loss)
     plt.title("Average ELBO per Epoch")
     plt.ylabel("Average ELBO")
@@ -126,35 +127,36 @@ def plot_probability_densities(nepochs, log_q0_z0, log_qk_zk, log_p_x_given_zk, 
     # Three separate plots
     range_epochs = range(nepochs)
 
-    plt.figure(0)
-    plt.plot(range_epochs, log_q0_z0)
+    plt.figure("Average $log\, q_0z_0$ per epoch")
+    plt.plot([int(elm) for elm in range_epochs], [float(round(elem, 2)) for elem in log_q0_z0])
+    # plt.plot(range_epochs, log_q0_z0)
     plt.title("Average $log\, q_0z_0$ per epoch")
     plt.ylabel("Average $log q_0z_0$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_q0_z0.png"))
 
-    plt.figure(1)
+    plt.figure("Average $log\, q_kz_k$ per epoch")
     plt.plot(range_epochs, log_qk_zk)
     plt.title("Average $log\, q_kz_k$ per epoch")
     plt.ylabel("Average $log q_kz_k$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_qk_zk.png"))
 
-    plt.figure(2)
+    plt.figure("Average $log\, p(x|z_k)$ per Epoch")
     plt.plot(range_epochs, log_p_x_given_zk)
     plt.title("Average $log\, p(x|z_k)$ per Epoch")
     plt.ylabel("Average $log p(x|z_k)$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_p_x_given_zk.png"))
 
-    plt.figure(3)
+    plt.figure("Average $log\, p(z_k)$ per Epoch")
     plt.plot(range_epochs, log_p_zk)
     plt.title("Average $log\, p(z_k)$ per Epoch")
     plt.ylabel("Average $log\, p(z_k)$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_p_zk.png"))
 
-    plt.figure(4)
+    plt.figure("Average Sum Log Determinant of Jacobian per Epoch")
     plt.plot(range_epochs, avg_sum_logdetj)
     plt.title("Average Sum Log Determinant of Jacobian per Epoch")
     plt.ylabel("Average avg_sum_logdetj")

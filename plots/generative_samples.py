@@ -1,3 +1,32 @@
+import numpy as np
+import scipy
+
+from tempfile import NamedTemporaryFile
+from IPython.display import HTML
+
+import matplotlib.pyplot as plt
+from matplotlib import animation, rc
+
+rc('animation', html='html5')
+
+
+def get_obs(_obs):
+    """
+    cos and sine theta as inputs.
+    :param _obs:
+    :return:
+    """
+    image_dims = [16, 16]
+    x = np.linspace(-4, 4, image_dims[0])
+    y = np.linspace(-4, 4, image_dims[1])
+    xv, yv = np.meshgrid(x, y)
+    r = np.array([[_obs[0], -_obs[1]], [_obs[1], _obs[0]]])
+
+    obs = scipy.stats.norm.pdf(np.dot(np.concatenate((xv.ravel()[:, np.newaxis], yv.ravel()[:, np.newaxis]), 1), r),
+                                loc=[0, -2.0], scale=[0.5, 0.9]).prod(1)
+    obs += np.random.randn(*obs.shape) * 0.01
+    return obs
+
 
 def make_vid(X, rows=10, cols=10, h=16, w=16):
     vid = []
@@ -6,7 +35,7 @@ def make_vid(X, rows=10, cols=10, h=16, w=16):
     return np.array(vid)
 
 
-def create_video(SPL, save_path="/home/abhishek/Desktop/"):
+def create_video(SPL, save_path=None):
     writer = animation.FFMpegWriter(fps=15)
 
     video = make_vid(SPL, rows=10, cols=10, h=16, w=16)
@@ -21,7 +50,7 @@ def create_video(SPL, save_path="/home/abhishek/Desktop/"):
     return vid_ani
 
 
-## Taken from breze:
+# Taken from breze:
 
 def scale_to_unit_interval(ndar, eps=1e-8):
     """Return a copy of ndar with all values scaled between 0 and 1."""
@@ -134,53 +163,43 @@ def tile_raster_images(X, img_shape, tile_shape, tile_spacing=(0, 0),
                     ] = this_img * c
     return out_array
 
-# create_video(images_arr)
-
-# from moviepy.editor import VideoClip
-#
-# def make_frame(image, time_step):
-#     # return images_arr[int(t), :, :, :]
-#     image = np.reshape(image, (time_step, 16, 16))
-#     return image[t,:,:]
-#     # return images_arr[:, int(t)]
-#     # return images_arr[:, int(t * (images_arr.shape[0] - 1))]
-#
-# animation = VideoClip(make_frame(images_arr[:,0,:], 100), duration=15) # 3-second clip
-# animation.write_gif("my_animation.gif", fps=24)
-#
-
-
-
-
-import pickle
-import numpy as np
-import scipy.stats
-# from tempfile import NamedTemporaryFile
-# from IPython.display import HTML
-# import matplotlib.pyplot as plt
-# from matplotlib import animation, rc
-# rc('animation', html='html5')
-
 import os
-from PIL import Image, ImageTk
-from scipy.misc import imsave
+import pickle
 
-# from os import listdir
-from os.path import isfile, join
+# Set up directories
+dir_gs_data_as_image = "/home/abhishek/Desktop/Junk/test_gs/"
+if not os.path.exists(dir_gs_data_as_image):
+    os.makedirs(dir_gs_data_as_image)
+
+dir_gif_from_data = "/home/abhishek/Desktop/Junk/test_gs/gif/"
+if not os.path.exists(dir_gif_from_data):
+    os.makedirs(dir_gif_from_data)
+
+dir_image_grid_from_data = "./output/actual_data_as_image/gif/"
+if not os.path.exists(dir_image_grid_from_data):
+    os.makedirs(dir_image_grid_from_data)
+
+file_actual_data_as_image_grid = os.path.join(dir_image_grid_from_data, "/" + "gs_as_image_grid.png")
+
+# data = pickle.load(open('/home/abhishek/Desktop/Junk/test_gs/gs_samples.pkl', "rb"))
+data = pickle.load(open('/home/abhishek/Desktop/Junk/test_gs/datasets.pkl', "rb"))
+data = data.train.next_batch(100)
+
+# data = pickle.load(open('./pickled_data/junk_gs_samples.pkl', "rb"))
+
+batch_size = data.shape[1]
+# Get cosine and sine from the dataset to create an array
+images = []
+for co, si in data[:, :, :2].reshape((-1, 2)):
+    image = get_obs([co, si])  # image.shape:(256,)
+    images.append(image)  # Final len(images)= 10000
+
+images_arr = np.array(images).reshape((100, batch_size, -1))  # images_arr shape: (100,100,256)
 
 
-# from moviepy.editor import VideoClip
-#
-#
-from data_source.dataset import Datasets, Dataset
-from data_source import dataset_utils
+"""
+Following is done to get a batch size of 100. Code for creating video and image grid only works for a batch size of 100.
+"""
+images_arr = np.concatenate([images_arr, images_arr, images_arr, images_arr, images_arr], axis=1)
 
-
-
-
-# plt.rcParams['animation.ffmpeg_path'] = u'/usr/bin/ffmpeg'
-
-
-
-
-
+create_video(images_arr, dir_gif_from_data)

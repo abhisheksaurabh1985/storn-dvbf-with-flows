@@ -517,12 +517,11 @@ class STORN(object):
             # Get x shifted backwards.
             # Step 1: Slice to get time steps 0 through (ts-1). Step 2: Concatenate the last time step so that it is
             # in the beginning.
-            x_slice_1 = tf.slice(x, [0, 0, 0], [self.time_steps-1, self.batch_size, -1])
+            x_slice_1 = tf.slice(x, [0, 0, 0], [self.time_steps-1, self.batch_size, -1], name="x_slice_1")
             print "x_slice_1 shape:", x_slice_1.get_shape()
-            # x_slice_2 = tf.zeros(tf.slice(x, [self.time_steps-1, 0, 0], [1, self.batch_size, -1]), dtype=tf.float32,
-            #                      name="x_slice_2")
-            x_slice_2 = tf.slice(x, [self.time_steps-1, 0, 0], [1, self.batch_size, -1])
-
+            x_slice_2 = tf.zeros_like(tf.slice(x, [self.time_steps-1, 0, 0], [1, self.batch_size, -1]),
+                                      dtype=tf.float32, name="x_slice_2")
+            # x_slice_2 = tf.slice(x, [self.time_steps-1, 0, 0], [1, self.batch_size, -1])
             print "x_slice_2 shape:", x_slice_2.get_shape()
             x_shifted_backwards = tf.concat([x_slice_2, x_slice_1], 0)
             print "x_shifted_backwards shape:", x_shifted_backwards.get_shape()

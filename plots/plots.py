@@ -124,6 +124,7 @@ def plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flo
 
 def plot_probability_densities(nepochs, log_q0_z0, log_qk_zk, log_p_x_given_zk, log_p_zk, avg_sum_logdetj,
                                flow_type=None, output_dir=None):
+
     # Three separate plots
     range_epochs = range(nepochs)
 
@@ -136,28 +137,32 @@ def plot_probability_densities(nepochs, log_q0_z0, log_qk_zk, log_p_x_given_zk, 
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_q0_z0.png"))
 
     plt.figure("Average $log\, q_kz_k$ per epoch")
-    plt.plot(range_epochs, log_qk_zk)
+    plt.plot([int(elm) for elm in range_epochs], [float(round(elem, 2)) for elem in log_qk_zk])
+    # plt.plot(range_epochs, log_qk_zk)
     plt.title("Average $log\, q_kz_k$ per epoch")
     plt.ylabel("Average $log q_kz_k$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_qk_zk.png"))
 
     plt.figure("Average $log\, p(x|z_k)$ per Epoch")
-    plt.plot(range_epochs, log_p_x_given_zk)
+    plt.plot([int(elm) for elm in range_epochs], [float(round(elem, 2)) for elem in log_p_x_given_zk])
+    # plt.plot(range_epochs, log_p_x_given_zk)
     plt.title("Average $log\, p(x|z_k)$ per Epoch")
     plt.ylabel("Average $log p(x|z_k)$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_p_x_given_zk.png"))
 
     plt.figure("Average $log\, p(z_k)$ per Epoch")
-    plt.plot(range_epochs, log_p_zk)
+    plt.plot([int(elm) for elm in range_epochs], [float(round(elem, 2)) for elem in log_p_zk])
+    # plt.plot(range_epochs, log_p_zk)
     plt.title("Average $log\, p(z_k)$ per Epoch")
     plt.ylabel("Average $log\, p(z_k)$")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(output_dir, str.lower(flow_type) + "_" + "log_p_zk.png"))
 
     plt.figure("Average Sum Log Determinant of Jacobian per Epoch")
-    plt.plot(range_epochs, avg_sum_logdetj)
+    plt.plot([int(elm) for elm in range_epochs], [float(round(elem, 2)) for elem in avg_sum_logdetj])
+    # plt.plot(range_epochs, avg_sum_logdetj)
     plt.title("Average Sum Log Determinant of Jacobian per Epoch")
     plt.ylabel("Average avg_sum_logdetj")
     plt.xlabel("Epochs")

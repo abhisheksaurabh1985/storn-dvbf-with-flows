@@ -40,7 +40,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 3
+training_epochs = 2000
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -50,7 +50,7 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Radial"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "NoFlow"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 8  # Number of times flow has to be applied.
@@ -410,7 +410,7 @@ def latent_standard_normal_prior(nts, mbs, zdim):
 if model_type == "storn_with_input":
     gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
 
-    # Take the first date point
+    # Take the first date point. x is initialized as a random normal here.
     gs_x_init = tf.random_normal([100, X_dim], name="gs_x_init", dtype=tf.float32)  # Initialize x
 
     gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, model_type, input_x=gs_x_init,
@@ -439,6 +439,36 @@ elif model_type == "storn_without_input":
     gs_samples = generative_samples(sess, gs_x_recons)
     print "gs_samples shape:", gs_samples.shape
     pickle.dump(gs_samples, open(os.path.join(dir_gs, 'gs_samples.pkl'), "wb"))
+
+"""
+Generative sample for a mini-batch using STORN with input
+"""
+if model_type == "storn_with_input":
+    gs_z_mu_for_comparison, gs_z_var_for_comparison, gs_z0_for_comparison = latent_standard_normal_prior(n_timesteps,
+                                                                                                         mb_size,
+                                                                                                         n_latent_dim)
+
+    # Take a mini-batch with which the generative samples will be compared.
+    x_for_generative_sampling_for_comparison = datasets.train.next_batch(100)
+
+    # Input data at the first time step will be used for initializing the input for generating generative samples.
+    gs_x_init_for_comparison = x_for_generative_sampling_for_comparison[0, :, :]
+
+    gs_mu_x_recons_for_comparison, gs_logvar_x_recons_for_comparison = nne.decoder_rnn(gs_z0, model_type,
+                                                                                       input_x=gs_x_init,
+                                                                                       operation_type='generative_sampling')
+    gs_var_x_recons_for_comparison = tf.exp(gs_logvar_x_recons)
+    gs_x_recons_for_comparison = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
+
+    def generative_samples(sess, gs_x_recons):
+        return sess.run(gs_x_recons)
+
+    gs_samples_for_comparison = generative_samples(sess, gs_x_recons_for_comparison)
+    print "gs_samples shape:", gs_samples_for_comparison.shape
+    pickle.dump(gs_samples_for_comparison, open(os.path.join(dir_gs, 'gs_samples_for_comparison.pkl'), "wb"))
+    pickle.dump(x_for_generative_sampling_for_comparison,
+                open(os.path.join(dir_gs,
+                                  'x_for_generative_sampling_for_comparison.pkl'), "wb"))
 
 sess.close()
 

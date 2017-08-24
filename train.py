@@ -95,10 +95,6 @@ def train_nf(sess, loss_op, loss_summary, prob_dists, solver, nepochs, n_samples
 
     # Plot losses per epoch
     plots.plots.plot_losses_for_nf(nepochs, avg_recons_loss, avg_kl_loss, avg_elbo_loss, flow_type, output_dir)
-    print "avg_recons_loss", avg_recons_loss
-    print "avg_log_q0_z0", np.asarray(avg_log_q0_z0).shape
-    print "avg_log_q0_z0", avg_log_q0_z0
-    print "avg_log_qk_zk", np.asarray(avg_log_qk_zk).shape
     # Plot probability densities
     # if flow_type == "Planar" or flow_type == "ConvolutionPlanar" or flow_type == "Radial":
     plots.plots.plot_probability_densities(nepochs, avg_log_q0_z0, avg_log_qk_zk, avg_log_p_x_given_zk, avg_log_p_zk,

@@ -25,6 +25,7 @@ from tensorflow.python.framework import ops
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # To build TF from source. Supposed to speed up the execution by 4-8x.
 
 ops.reset_default_graph()
+tf.set_random_seed(1234)
 # from tensorflow.python import debug as tf_debug
 # from matplotlib import pyplot as plt
 
@@ -38,8 +39,8 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 20
-learning_rate = 0.00001  # 0.0001 for Planar works well.
-training_epochs = 4
+learning_rate = 0.0001  # 0.0001 for Planar works well.
+training_epochs = 500
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -49,7 +50,7 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Radial"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "NoFlow"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 4  # Number of times flow has to be applied.
@@ -132,6 +133,8 @@ if not os.path.exists(dir_image_grid_from_actual_data):
 dir_saved_variables = os.path.join(output_dir, "saved_vars/")
 if not os.path.exists(dir_saved_variables):
     os.makedirs(dir_saved_variables)
+
+model_type = "storn_with_input"
 
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
@@ -257,7 +260,7 @@ elif flow_type == "NoFlow":
     z_k = z0
 
 # DECODER
-mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k)  # Shape: (T,B,x_dim)
+mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k, model_type, input_x=_X)  # Shape: (T,B,x_dim)
 var_x_recons = tf.exp(logvar_x_recons)
 x_recons = nne.reparametrize_z(mu_x_recons, var_x_recons)
 
@@ -394,36 +397,35 @@ pickle.dump([x_sample, x_reconstructed, time_steps, actual_signals, recons_signa
 plots.plots.distribution_signals(x_sample, dir_pdist, flow_type, signal="actual")
 plots.plots.distribution_signals(x_reconstructed, dir_pdist, flow_type, signal="recons")
 
-
+# TODO
 # GENERATIVE SAMPLES
 
-
-def latent_standard_normal_prior(nts, mbs, zdim):
-    mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
-                    name="z_mu_generative_sampling")
-    variance = tf.ones(shape=[nts, mbs, zdim], dtype=tf.float32,
-                       name="z_var_generative_sampling")
-    latent_var = nne.reparametrize_z(mean, variance)
-    return mean, variance, latent_var
-
-gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
-
-# gs_x_init = np.zeros((n_timesteps, mb_size, X_dim), dtype=np.float32)
-gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0)
-gs_var_x_recons = tf.exp(gs_logvar_x_recons)
-gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
-
-
-def generative_samples(sess, gs_x_recons):
-    return sess.run(gs_x_recons)
-
-gs_samples = generative_samples(sess, gs_x_recons)
+# if model_type == "storn_without_input":
+#     def latent_standard_normal_prior(nts, mbs, zdim):
+#         mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
+#                         name="z_mu_generative_sampling")
+#         variance = tf.ones(shape=[nts, mbs, zdim], dtype=tf.float32,
+#                            name="z_var_generative_sampling")
+#         latent_var = nne.reparametrize_z(mean, variance)
+#         return mean, variance, latent_var
+#
+#     gs_z_mu, gs_z_var, gs_z0 = latent_standard_normal_prior(n_timesteps, mb_size, n_latent_dim)
+#
+#     # gs_x_init = np.zeros((n_timesteps, mb_size, X_dim), dtype=np.float32)  # Dummy input. Not being used.
+#     gs_mu_x_recons, gs_logvar_x_recons = nne.decoder_rnn(gs_z0, flow_type)
+#     gs_var_x_recons = tf.exp(gs_logvar_x_recons)
+#     gs_x_recons = nne.reparametrize_z(gs_mu_x_recons, gs_var_x_recons)
 #
 #
-# print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
-print "gs_samples shape:", gs_samples.shape
-# print "#########%%%%%%%%%%%%%%%%^^^^^^^^^^^^^^^^^^**********"
-pickle.dump(gs_samples, open(os.path.join(dir_gs, 'gs_samples.pkl'), "wb"))
+#     def generative_samples(sess, gs_x_recons):
+#         return sess.run(gs_x_recons)
+#
+#     gs_samples = generative_samples(sess, gs_x_recons)
+#     print "gs_samples shape:", gs_samples.shape
+#     pickle.dump(gs_samples, open(os.path.join(dir_gs, 'gs_samples.pkl'), "wb"))
+# elif model_type == "storn_with_input":
+#     pass
+#
 
 sess.close()
 

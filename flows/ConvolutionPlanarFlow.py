@@ -33,7 +33,7 @@ class ConvolutionPlanarFlow(object):
         temp = tf.nn.conv1d(z, W, stride=strides, padding="SAME")
         return temp
 
-    def convolution_planar_flow(self, z, flow_params, num_flows, n_latent_dim, filter_width=3):
+    def convolution_planar_flow(self, z, flow_params, num_flows, n_latent_dim, filter_width=3, invert_condition=False):
         """
         z shape: (bs,ts,?); us, bs shape: (ts, bs, ?); ws shape: (1, num_flows * filter_width * n_latent_dim * 1)
         """

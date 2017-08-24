@@ -91,10 +91,11 @@ def save_as_pickle(filename, dataset):
 
 # entry point
 if __name__ == '__main__':
+
+    np.random.seed(0)
+
     datasets = Datasets()
-
     env = gym.make('Pendulum-v0')
-
     n_samples = 1000
     n_timesteps = 100
     test_size = 0.2 # Percentage of test data

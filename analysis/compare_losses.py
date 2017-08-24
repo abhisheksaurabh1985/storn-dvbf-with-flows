@@ -2,6 +2,7 @@ import os
 # from plots.helper_functions import *
 import plots
 import matplotlib.pyplot as plt
+plt.style.use('seaborn-deep')
 from scipy import interpolate
 
 
@@ -143,8 +144,8 @@ if __name__ == '__main__':
     # Specify start and end epochs for the graph
     nepochs = 4000
     remove_outlier = True
-    start_epoch = 1500
-    end_epoch = 2500
+    start_epoch = 2000
+    end_epoch = 3700
 
     # Read log files
     nof_losses = plots.helper_functions.read_loss_logfile(no_flow_logfile_path)

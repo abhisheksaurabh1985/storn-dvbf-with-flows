@@ -134,7 +134,7 @@ dir_saved_variables = os.path.join(output_dir, "saved_vars/")
 if not os.path.exists(dir_saved_variables):
     os.makedirs(dir_saved_variables)
 
-model_type = "storn_with_input"
+model_type = "storn_with_input"  # "storn_with_input" or "storn_without_input".
 
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),

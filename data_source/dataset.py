@@ -123,7 +123,7 @@ if __name__ == '__main__':
 #    print x_train.shape, x_test.shape        
 
     x_train, x_test = np.split(shuffled_data, 
-                               [int(.8*shuffled_data.shape[1])], axis = 1)    
+                               [int(.8*shuffled_data.shape[1])], axis=1)
     
     # Create dataset
     datasets.train = Dataset(x_train)

@@ -40,7 +40,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 2000
+training_epochs = 3
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -50,7 +50,7 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "NoFlow"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "Radial"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 8  # Number of times flow has to be applied.
@@ -449,7 +449,7 @@ if model_type == "storn_with_input":
                                                                                                          n_latent_dim)
 
     # Take a mini-batch with which the generative samples will be compared.
-    x_for_generative_sampling_for_comparison = datasets.train.next_batch(100)
+    x_for_generative_sampling_for_comparison = datasets.train.next_batch(mb_size)
 
     # Input data at the first time step will be used for initializing the input for generating generative samples.
     gs_x_init_for_comparison = x_for_generative_sampling_for_comparison[0, :, :]
@@ -465,11 +465,19 @@ if model_type == "storn_with_input":
 
     gs_samples_for_comparison = generative_samples(sess, gs_x_recons_for_comparison)
     print "gs_samples shape:", gs_samples_for_comparison.shape
-    pickle.dump(gs_samples_for_comparison, open(os.path.join(dir_gs, 'gs_samples_for_comparison.pkl'), "wb"))
+    if flow_type == "NoFlow":
+        prefix_gs_file = "nf"
+    elif flow_type == "Planar":
+        prefix_gs_file = "pf"
+    elif flow_type == "Radial":
+        prefix_gs_file = "rf"
+    elif flow_type == "ConvolutionPlanar":
+        prefix_gs_file = "cpf"
+    pickle.dump(gs_samples_for_comparison,
+                open(os.path.join(dir_gs, prefix_gs_file + '_' + 'gs_samples_for_comparison.pkl'), "wb"))
     pickle.dump(x_for_generative_sampling_for_comparison,
                 open(os.path.join(dir_gs,
-                                  'x_for_generative_sampling_for_comparison.pkl'), "wb"))
-
+                                  prefix_gs_file + '_' + 'x_for_generative_sampling_for_comparison.pkl'), "wb"))
 sess.close()
 
 

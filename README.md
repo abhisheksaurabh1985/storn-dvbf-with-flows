@@ -11,11 +11,13 @@ structure:
         - losses
         - probability_distributions
         - data_dist_plot (already there)  
-- Generative model output
+- Generative model output: DONE
     - One what Justin has in his paper. Use the actual signal until a certain time step and then plot both the actual 
     and generative signals. 
     - Basic one without any comparison, what I already have. This is needed just to ensure that the output is plausible.
-- DONE. Additional line in the plots of log(px|zk), log(q0z0), log(qk_zk). 
+- Additional line in the plots of log(px|zk), log(q0z0), log(qk_zk). DONE. 
+- Some issue in dataset_utils with a batch size of less than 5.
+- Same batch is not being generated. Some issue with random number generator.  
  
  
 TODO: Weekend 13th August

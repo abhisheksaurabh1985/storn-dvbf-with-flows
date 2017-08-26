@@ -1,7 +1,8 @@
 from storn import STORN
 from flows import *
 import plots
-from data_source.dataset import Datasets, Dataset
+# from data_source.dataset import Datasets, Dataset
+from data_source.data_set import Datasets, Dataset
 from data_source import dataset_utils
 
 # from dataset import *  # Needed despite using the pickled files!
@@ -50,7 +51,7 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Radial"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "Planar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 8  # Number of times flow has to be applied.
@@ -111,6 +112,7 @@ normalize_data = False
 dir_pdist = os.path.join(output_dir, "pdist/")
 if not os.path.exists(dir_pdist):
     os.makedirs(dir_pdist)
+
 dir_gs = os.path.join(output_dir, "gs/")
 if not os.path.exists(dir_gs):
     os.makedirs(dir_gs)
@@ -172,8 +174,9 @@ with open(os.path.join(output_dir, "logfile.log"), "a") as f:
     f.write("\n" + "Experiment start time:" + experiment_start_time.strftime('%d %b %Y %H:%M:%S') + "\n\n")
 
 # DATASET
-XU = pickle.load(open('./pickled_data/XU.pkl', "rb"))
-shuffled_data = pickle.load(open('./pickled_data/shuffled_data.pkl', "rb"))
+# Each mini-batch should have the shape: (ts, bs, num_features).
+# XU = pickle.load(open('./pickled_data/XU.pkl', "rb"))
+# shuffled_data = pickle.load(open('./pickled_data/shuffled_data.pkl', "rb"))
 datasets = pickle.load(open('./pickled_data/datasets.pkl', "rb"))
 
 # ENCODER
@@ -464,6 +467,7 @@ if model_type == "storn_with_input":
         return sess.run(gs_x_recons)
 
     gs_samples_for_comparison = generative_samples(sess, gs_x_recons_for_comparison)
+
     print "gs_samples shape:", gs_samples_for_comparison.shape
     if flow_type == "NoFlow":
         prefix_gs_file = "nf"

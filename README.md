@@ -17,7 +17,7 @@ structure:
     - Basic one without any comparison, what I already have. This is needed just to ensure that the output is plausible.
 - Additional line in the plots of log(px|zk), log(q0z0), log(qk_zk). DONE. 
 - Some issue in dataset_utils with a batch size of less than 5.
-- Same batch is not being generated. Some issue with random number generator.  
+- Same batch is not being generated. Some issue with random number generator. This is not yet sorted.  
  
  
 TODO: Weekend 13th August

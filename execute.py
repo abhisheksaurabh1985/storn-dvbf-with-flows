@@ -18,7 +18,7 @@ import time
 import datetime
 import json
 import collections
-import numpy as np
+# import numpy as np
 
 import tensorflow as tf
 from tensorflow.python.framework import ops
@@ -41,7 +41,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 3
+training_epochs = 10000
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -106,7 +106,7 @@ if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow" or fl
 optimizer = tf.train.AdamOptimizer
 
 # Normalize data
-normalize_data = False
+normalize_data = False  # Always use False.
 
 # Output directory for probability distribution and generative samples
 dir_pdist = os.path.join(output_dir, "pdist/")
@@ -136,7 +136,7 @@ dir_saved_variables = os.path.join(output_dir, "saved_vars/")
 if not os.path.exists(dir_saved_variables):
     os.makedirs(dir_saved_variables)
 
-model_type = "storn_with_input"  # "storn_with_input" or "storn_without_input".
+model_type = "storn_with_input"  # "storn_with_input" or "storn_without_input". Always use the former.
 
 # Store the parameters in a dictionary
 parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', n_timesteps),
@@ -401,6 +401,7 @@ pickle.dump([x_sample, x_reconstructed, time_steps, actual_signals, recons_signa
 plots.plots.distribution_signals(x_sample, dir_pdist, flow_type, signal="actual")
 plots.plots.distribution_signals(x_reconstructed, dir_pdist, flow_type, signal="recons")
 
+
 # GENERATIVE SAMPLES
 def latent_standard_normal_prior(nts, mbs, zdim):
     mean = tf.zeros(shape=[nts, mbs, zdim], dtype=tf.float32,
@@ -452,8 +453,9 @@ if model_type == "storn_with_input":
                                                                                                          n_latent_dim)
 
     # Take a mini-batch with which the generative samples will be compared.
-    x_for_generative_sampling_for_comparison = datasets.train.next_batch(mb_size)
-
+    # ds = pickle.load(open('./pickled_data/datasets.pkl', "rb"))
+    # x_for_generative_sampling_for_comparison = ds.train.next_batch(mb_size)
+    x_for_generative_sampling_for_comparison = x_sample
     # Input data at the first time step will be used for initializing the input for generating generative samples.
     gs_x_init_for_comparison = x_for_generative_sampling_for_comparison[0, :, :]
 
@@ -469,6 +471,7 @@ if model_type == "storn_with_input":
     gs_samples_for_comparison = generative_samples(sess, gs_x_recons_for_comparison)
 
     print "gs_samples shape:", gs_samples_for_comparison.shape
+
     if flow_type == "NoFlow":
         prefix_gs_file = "nf"
     elif flow_type == "Planar":
@@ -477,6 +480,7 @@ if model_type == "storn_with_input":
         prefix_gs_file = "rf"
     elif flow_type == "ConvolutionPlanar":
         prefix_gs_file = "cpf"
+
     pickle.dump(gs_samples_for_comparison,
                 open(os.path.join(dir_gs, prefix_gs_file + '_' + 'gs_samples_for_comparison.pkl'), "wb"))
     pickle.dump(x_for_generative_sampling_for_comparison,

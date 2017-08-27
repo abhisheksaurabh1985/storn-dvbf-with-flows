@@ -39,7 +39,6 @@ def plot_signals_and_generative_samples(n_time_steps, cut_off_time_step, n_featu
 
     for each_point in points_to_plot:
         for i in range(n_feature):
-            print type(i)
             plt.figure(str(each_point) + str(i))
             plt.plot(range(n_time_steps), actual_signal[i][:, each_point])
             # plt.plot(range(cut_off_time_step), actual_signal[i][0:cut_off_time_step, each_point])

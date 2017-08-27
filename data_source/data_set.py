@@ -33,6 +33,7 @@ class Dataset(object):
         start = self._index_in_epoch
         if start == 0 and self._epochs_completed == 0:
             idx = np.arange(0, self._num_examples)  # get all possible indexes
+            np.random.seed(1)
             np.random.shuffle(idx)  # shuffle indexes
             self._data = self.full_data[:, idx, :]  # get list of `num` random samples
 
@@ -42,6 +43,7 @@ class Dataset(object):
             rest_num_examples = self._num_examples - start
             data_rest_part = self.full_data[:, start:self._num_examples, :]
             idx0 = np.arange(0, self._num_examples)  # get all possible indexes
+            np.random.seed(0)
             np.random.shuffle(idx0)  # shuffle indexes
             self._data = self.full_data[:, idx0, :]  # get list of `num` random samples
 
@@ -58,7 +60,7 @@ class Dataset(object):
 
 # entry point
 if __name__ == '__main__':
-    np.random.seed(0)
+    # np.random.seed(0)
     env = gym.make('Pendulum-v0')
     n_samples = 1000
     n_timesteps = 100

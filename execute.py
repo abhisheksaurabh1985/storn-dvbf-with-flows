@@ -54,7 +54,7 @@ activation_function = tf.nn.relu
 flow_type = "Planar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
-numFlows = 8  # Number of times flow has to be applied.
+numFlows = 2  # Number of times flow has to be applied.
 apply_invertibility_condition = True
 beta = False
 

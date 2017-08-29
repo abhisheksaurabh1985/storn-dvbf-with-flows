@@ -9,7 +9,6 @@ pickled_data/
 output/
 output_models/
 results_worth_saving/
-.idea/
 .ipynb_checkpoints/
 # Ignore miscellaneous files
 junk.txt

@@ -100,3 +100,6 @@ imageio.core.fetching.NeedDownloadError: Need ffmpeg exe. You can download it by
 - Histograms side by side in the same figure for 0th instance in the batch.
 - Compare no flow, planar, conv flow for no more than 5 bins.   
  
+* Latent space plot * 
+- latent data: (bs, ts, d). Reshape it as (-1,2). Scatter plot this data. Take a point in the batch and trace its path 
+in the latent space. 

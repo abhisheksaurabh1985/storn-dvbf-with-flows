@@ -253,19 +253,13 @@ class ConvolutionPlanarFlow(object):
                 print "dtanh wzb shape:", self.dtanh(wzb).get_shape()  # (bs, ts, 1)
 
                 if reshape == "2D":
+                    # USE THIS ONE
                     # Step 4: This is the calculation of Jacobian. If this works, then calculation of psi and psi_ut may
                     # not be needed.
                     print "f_z shape", f_z.get_shape()
                     print "z shape", z.get_shape()
-                    # jacobian_z = self.jacobian(tf.reshape(f_z, shape=[z.get_shape().as_list()[0], -1]), z)
-                    # reshaped_f_z = tf.reshape(f_z, shape=[tf.shape(z)[0], self.time_steps * self.z_dim])
                     reshaped_f_z = tf.reshape(f_z, shape=[self.batch_size, self.time_steps * self.z_dim])
-                    # reshaped_f_z = tf.reshape(f_z, shape=[z.get_shape().as_list()[0], 200])
                     print "reshaped f_z shape", reshaped_f_z.get_shape()
-
-                    # reshaped_z = tf.reshape(z, shape=[tf.shape(z)[0], self.time_steps * self.z_dim])
-                    # reshaped_z = tf.reshape(z, shape=[self.batch_size, self.time_steps * self.z_dim])
-                    # print "reshaped z shape", reshaped_z.get_shape()
                     jacobian_z = self.make_jacobian_2D(reshaped_f_z,
                                                        z,
                                                        self.time_steps * self.z_dim)
@@ -273,40 +267,39 @@ class ConvolutionPlanarFlow(object):
                     # Without reshaping
                     jacobian_z = self.make_jacobian(f_z,
                                                     z,
-                                                    self.z_dim)  # (20, 100, ?, ?)
-                print "jacobian_z shape", jacobian_z.get_shape()  # (?, ?, 200)
+                                                    self.z_dim)  # (?, ?, 200)
+                print "jacobian_z shape", jacobian_z.get_shape()
+
                 # # Determinant. Without expanding dims, the shape is (b,t). Post expansion, shape is (b,t,1).
-                # # determinant_jacobian = tf.matrix_determinant(jacobian_z, name="determinant_jacobian")
-                determinant_jacobian = tf.expand_dims(tf.matrix_determinant(jacobian_z,
-                                                                            name="determinant_jacobian"), -1)
+                # determinant_jacobian = tf.matrix_determinant(jacobian_z, name="determinant_jacobian")
+
+                # Step 4: Calculate log determinant of jacobian
+                # diagonal_elements = tf.diag_part(jacobian_z)
+                # print "diagonal elements shape:", diagonal_elements.get_shape()
+                #
+                # determinant_jacobian = tf.expand_dims(tf.matrix_determinant(jacobian_z,
+                #                                                             name="determinant_jacobian"), -1)
+                # # determinant_jacobian = tf.add(determinant_jacobian, 1e-6)
                 # print "determinant_jacobian shape", determinant_jacobian.get_shape()
-                # Step 4: First transpose the filter to match the dimensions of psi. Then rotate it for convolution.
-                # psi shape: (bs, ts, 2)
-                # psi = self.conv1d(self.dtanh(wzb), self.tf_rot180(tf.transpose(w, perm=[0, 2, 1])))
-                # print "psi shape:", psi.get_shape()
-                #
-                # # Step 5: This is correct. Jacobian of psi_ut is to be calculated.
-                # # u shape: (bs, ts, ?), psi shape: (bs, ts, 2), psi_ut:(bs, ts, 2)
-                # # psi_ut = tf.multiply(psi, u, name="psi_ut")
-                # # psi_ut = tf.transpose(tf.matmul(tf.transpose(u, perm=[0, 2, 1]), psi, name="psi_u"), perm=[0, 2, 1],
-                # #                       name="psi_ut")  # Reshaped from (bs, ?, 1) to (bs, 1, ?).
-                # psi_ut = tf.matmul(u, tf.transpose(psi, perm=[0, 2, 1], name="psi_transpose"))
-                #                        # Reshaped from (bs, ?, 1) to (bs, 1, ?).
-                # print "psi_ut shape:", psi_ut.get_shape()
-                #
-                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-                # Step 6:
-                # logdet_jacobian = tf.log(tf.abs(1 + psi_ut) + 1e-10)  # logdet_jacobian shape: (bs, ts, 2)
-                logdet_jacobian = tf.log(tf.abs(1 + determinant_jacobian) + 1e-10)  # logdet_jacobian shape: (bs, ts, 2)
-                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-                # singular_value = tf.stop_gradient(tf.svd(determinant_jacobian, compute_uv=False))
+                # determinant_jacobian = tf.expand_dims(determinant_jacobian, -1)
+                # print "determinant_jacobian shape", determinant_jacobian.get_shape()
+
+                singular_values = tf.stop_gradient(tf.svd(jacobian_z, compute_uv=False))
+                print "singular_values shape:", singular_values.get_shape()
+
+                logdet_jacobian = tf.log(tf.reduce_prod(singular_values, axis=-1) + 1e-6)
                 # tf.stop_gradient(singular_value, name="stop_gradient_svd")
                 # singular_value = np.linalg.svd(determinant_jacobian, compute_uv=0)
                 # logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10), axis=1)
+
+                # Step 6:
+                # logdet_jacobian = tf.log(tf.abs(1 + psi_ut) + 1e-10)  # logdet_jacobian shape: (bs, ts, 2)
+                # logdet_jacobian = tf.log(tf.abs(determinant_jacobian) + 1e-10)  # logdet_jacobian shape: (bs, ts, 2)
+
                 print "logdet_jacobian shape:", logdet_jacobian.get_shape()
                 # _logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10))
-                # log_detjs.append(tf.expand_dims(logdet_jacobian, axis=1))
-                log_detjs.append(logdet_jacobian)
+                log_detjs.append(tf.expand_dims(logdet_jacobian, axis=1))
+                # log_detjs.append(logdet_jacobian)
                 print "shape of first element in list:", log_detjs[0].get_shape()
             # Concatenated vertically. Below, logdet_jacobian shape: (bs, numFlows*ts, 2).
             logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)

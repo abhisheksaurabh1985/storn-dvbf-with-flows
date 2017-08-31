@@ -41,7 +41,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 10000
+training_epochs = 3
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -51,7 +51,7 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "Planar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "ConvolutionPlanar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
 numFlows = 2  # Number of times flow has to be applied.
@@ -162,6 +162,7 @@ parameters = collections.OrderedDict([('n_samples', n_samples), ('n_timesteps', 
                                       ('dir_gif_from_actual_data', dir_gif_from_actual_data),
                                       ('dir_image_grid_from_actual_data', dir_image_grid_from_actual_data),
                                       ('model_type', model_type)])
+print parameters
 
 # Write hyper-parameters with time-stamp in a file. Also write the same time stamp in the logfile.log
 # experiment_start_time = time.strftime("%c")
@@ -254,12 +255,16 @@ elif flow_type == "Radial":
     # sum_logdet_jacobian = tf.reduce_sum(_logdet_jacobian, axis=[0, 1])
     sum_logdet_jacobian = _logdet_jacobian
 elif flow_type == "ConvolutionPlanar":
-    currentClass = ConvolutionPlanarFlow.ConvolutionPlanarFlow(z0, n_latent_dim)
+    currentClass = ConvolutionPlanarFlow.ConvolutionPlanarFlow(z0, n_latent_dim, n_timesteps, mb_size)
     print "z0 shape:", z0.get_shape()
     print "z0 transposed shape:", tf.transpose(z0, perm=[1, 0, 2]).get_shape()
-    z_k, sum_logdet_jacobian = currentClass.convolution_planar_flow(tf.transpose(z0, perm=[1, 0, 2]),
-                                                                    flow_params, numFlows, n_latent_dim,
-                                                                    filter_width=3)
+    # z_k, sum_logdet_jacobian = currentClass.convolution_planar_flow(tf.transpose(z0, perm=[1, 0, 2]),
+    #                                                                 flow_params, numFlows, n_latent_dim,
+    #                                                                 filter_width=3)
+    z_k, sum_logdet_jacobian, jacobian_z = \
+        currentClass.convolution_planar_flow_with_jacobian_manually_calculated(tf.transpose(z0, perm=[1, 0, 2]),
+                                                                               flow_params, numFlows, n_latent_dim,
+                                                                               filter_width=3)
 elif flow_type == "NoFlow":
     z_k = z0
 
@@ -339,7 +344,8 @@ if not restore_model:
     elif flow_type == "ConvolutionPlanar":
         average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
                                       solver, training_epochs, n_samples, mb_size,
-                                      display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir)
+                                      display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir,
+                                      jacobian_z)
     elif flow_type == "Radial":
         average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
                                       solver, training_epochs, n_samples, mb_size,
@@ -356,7 +362,6 @@ if not restore_model:
     saver.save(sess, os.path.join(models_dir, 'model.ckpt'))
 else:
     saver.restore(sess, os.path.join(fpath_restore_model, 'model.ckpt'))
-
 
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)

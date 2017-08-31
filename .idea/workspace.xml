@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="25c19493-6784-49a5-9b96-9f84f1a1f013" name="Default" comment="" />
+    <list default="true" id="25c19493-6784-49a5-9b96-9f84f1a1f013" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/execute.py" afterPath="$PROJECT_DIR$/execute.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/flows/ConvolutionPlanarFlow.py" afterPath="$PROJECT_DIR$/flows/ConvolutionPlanarFlow.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train.py" afterPath="$PROJECT_DIR$/train.py" />
+    </list>
     <ignored path="$PROJECT_DIR$/.idea/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -16,12 +20,22 @@
       <file leaf-file-name="execute.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/execute.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="645">
-              <caret line="46" column="38" lean-forward="false" selection-start-line="46" selection-start-column="38" selection-end-line="46" selection-end-column="38" />
+            <state relative-caret-position="412">
+              <caret line="347" column="48" lean-forward="false" selection-start-line="347" selection-start-column="48" selection-end-line="347" selection-end-column="48" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
-                <element signature="e#4488#6496#0" expanded="false" />
+                <element signature="e#4495#6503#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="compare_losses.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/analysis/compare_losses.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-1932">
+              <caret line="3" column="31" lean-forward="false" selection-start-line="3" selection-start-column="31" selection-end-line="3" selection-end-column="31" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -30,8 +44,8 @@
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="FIRST">
-              <first_editor relative-caret-position="-691">
-                <caret line="19" column="102" lean-forward="false" selection-start-line="19" selection-start-column="102" selection-end-line="19" selection-end-column="102" />
+              <first_editor relative-caret-position="249">
+                <caret line="104" column="21" lean-forward="false" selection-start-line="104" selection-start-column="21" selection-end-line="104" selection-end-column="21" />
                 <folding />
               </first_editor>
               <second_editor />
@@ -54,7 +68,7 @@
       <file leaf-file-name="generative_samples_comparison.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analysis/generative_samples_comparison.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="184">
+            <state relative-caret-position="-2465">
               <caret line="8" column="36" lean-forward="false" selection-start-line="8" selection-start-column="36" selection-end-line="8" selection-end-column="36" />
               <folding>
                 <element signature="e#23#35#0" expanded="true" />
@@ -66,8 +80,8 @@
       <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="184">
-              <caret line="24" column="44" lean-forward="false" selection-start-line="24" selection-start-column="34" selection-end-line="24" selection-end-column="44" />
+            <state relative-caret-position="309">
+              <caret line="29" column="59" lean-forward="false" selection-start-line="29" selection-start-column="59" selection-end-line="29" selection-end-column="59" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -78,18 +92,8 @@
       <file leaf-file-name="NormalizingPlanarFlow.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/flows/NormalizingPlanarFlow.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-736">
+            <state relative-caret-position="96">
               <caret line="25" column="88" lean-forward="false" selection-start-line="25" selection-start-column="67" selection-end-line="25" selection-end-column="88" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="loss_functions.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/losses/loss_functions.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="267">
-              <caret line="51" column="77" lean-forward="false" selection-start-line="51" selection-start-column="72" selection-end-line="51" selection-end-column="77" />
               <folding />
             </state>
           </provider>
@@ -98,8 +102,8 @@
       <file leaf-file-name="ConvolutionPlanarFlow.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/flows/ConvolutionPlanarFlow.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="426">
-              <caret line="98" column="44" lean-forward="false" selection-start-line="98" selection-start-column="44" selection-end-line="98" selection-end-column="44" />
+            <state relative-caret-position="-190">
+              <caret line="57" column="36" lean-forward="true" selection-start-line="57" selection-start-column="36" selection-end-line="57" selection-end-column="36" />
               <folding />
             </state>
           </provider>
@@ -136,8 +140,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>decoder_rnn</find>
-      <find>99</find>
       <find>tf.random</find>
       <find>tile_raster_images</find>
       <find>scale_to_unit_interval</find>
@@ -162,10 +164,12 @@
       <find>next_batch</find>
       <find>x_sample</find>
       <find>random</find>
-      <find>train.</find>
       <find>train.ne</find>
       <find>NormalizingRa</find>
+      <find>perm</find>
       <find>radial_flow_</find>
+      <find>train_nf</find>
+      <find>train.</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -200,20 +204,20 @@
         <option value="$PROJECT_DIR$/generative_sample.py" />
         <option value="$PROJECT_DIR$/plots/helper_functions.py" />
         <option value="$PROJECT_DIR$/analysis/compare_distributions.py" />
-        <option value="$PROJECT_DIR$/flows/ConvolutionPlanarFlow.py" />
         <option value="$PROJECT_DIR$/analysis/compare_losses.py" />
         <option value="$PROJECT_DIR$/images_actual_data.py" />
         <option value="$PROJECT_DIR$/plots/generative_samples.py" />
         <option value="$PROJECT_DIR$/losses/loss_functions.py" />
         <option value="$PROJECT_DIR$/storn.py" />
         <option value="$PROJECT_DIR$/plots/plots.py" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/data_source/dataset.py" />
         <option value="$PROJECT_DIR$/data_source/__init__.py" />
         <option value="$PROJECT_DIR$/analysis/generative_samples_comparison.py" />
         <option value="$PROJECT_DIR$/data_source/data_set.py" />
-        <option value="$PROJECT_DIR$/train.py" />
+        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/execute.py" />
+        <option value="$PROJECT_DIR$/train.py" />
+        <option value="$PROJECT_DIR$/flows/ConvolutionPlanarFlow.py" />
       </list>
     </option>
   </component>
@@ -384,7 +388,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/flows/NormalizingPlanarFlow.py" />
     <property name="two.files.diff.last.used.file" value="$PROJECT_DIR$/flows/NormalizingPlanarFlow.py" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$2/Languages" value="Python" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
+    <property name="settings.editor.selected.configurable" value="pyconsole" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -630,16 +634,15 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="80" y="-5" width="1841" height="1086" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32967034" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
       <window_info id="Debug Logs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.17692308" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.42857143" sideWeight="0.50196964" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30989012" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31428573" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32967034" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31978023" sideWeight="0.4980304" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.45604396" sideWeight="0.4980304" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Execute Anonymous" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32967034" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.689011" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.689011" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.19639842" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32857144" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24985932" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -908,14 +911,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/analysis/compare_losses.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2829">
-          <caret line="3" column="31" lean-forward="false" selection-start-line="3" selection-start-column="31" selection-end-line="3" selection-end-column="31" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/plots/plots.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1495">
@@ -970,7 +965,7 @@
         <state relative-caret-position="230">
           <caret line="10" column="52" lean-forward="false" selection-start-line="10" selection-start-column="52" selection-end-line="10" selection-end-column="52" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1001,50 +996,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="184">
-          <caret line="24" column="44" lean-forward="false" selection-start-line="24" selection-start-column="34" selection-end-line="24" selection-end-column="44" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/flows/NormalizingRadialFlow.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1542">
           <caret line="166" column="47" lean-forward="false" selection-start-line="166" selection-start-column="37" selection-end-line="166" selection-end-column="47" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/flows/NormalizingPlanarFlow.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-736">
-          <caret line="25" column="88" lean-forward="false" selection-start-line="25" selection-start-column="67" selection-end-line="25" selection-end-column="88" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analysis/generative_samples_comparison.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="184">
-          <caret line="8" column="36" lean-forward="false" selection-start-line="8" selection-start-column="36" selection-end-line="8" selection-end-column="36" />
-          <folding>
-            <element signature="e#23#35#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/execute.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="645">
-          <caret line="46" column="38" lean-forward="false" selection-start-line="46" selection-start-column="38" selection-end-line="46" selection-end-column="38" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#4488#6496#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1056,18 +1012,65 @@
       </provider>
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="FIRST">
-          <first_editor relative-caret-position="-691">
-            <caret line="19" column="102" lean-forward="false" selection-start-line="19" selection-start-column="102" selection-end-line="19" selection-end-column="102" />
+          <first_editor relative-caret-position="249">
+            <caret line="104" column="21" lean-forward="false" selection-start-line="104" selection-start-column="21" selection-end-line="104" selection-end-column="21" />
             <folding />
           </first_editor>
           <second_editor />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/analysis/compare_losses.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1932">
+          <caret line="3" column="31" lean-forward="false" selection-start-line="3" selection-start-column="31" selection-end-line="3" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analysis/generative_samples_comparison.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2465">
+          <caret line="8" column="36" lean-forward="false" selection-start-line="8" selection-start-column="36" selection-end-line="8" selection-end-column="36" />
+          <folding>
+            <element signature="e#23#35#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/flows/NormalizingPlanarFlow.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="96">
+          <caret line="25" column="88" lean-forward="false" selection-start-line="25" selection-start-column="67" selection-end-line="25" selection-end-column="88" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/execute.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="412">
+          <caret line="347" column="48" lean-forward="false" selection-start-line="347" selection-start-column="48" selection-end-line="347" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#4495#6503#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="309">
+          <caret line="29" column="59" lean-forward="false" selection-start-line="29" selection-start-column="59" selection-end-line="29" selection-end-column="59" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/flows/ConvolutionPlanarFlow.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="426">
-          <caret line="98" column="44" lean-forward="false" selection-start-line="98" selection-start-column="44" selection-end-line="98" selection-end-column="44" />
+        <state relative-caret-position="-190">
+          <caret line="57" column="36" lean-forward="true" selection-start-line="57" selection-start-column="36" selection-end-line="57" selection-end-column="36" />
           <folding />
         </state>
       </provider>

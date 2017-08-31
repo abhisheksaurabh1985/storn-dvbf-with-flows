@@ -264,7 +264,7 @@ elif flow_type == "ConvolutionPlanar":
     z_k, sum_logdet_jacobian, jacobian_z = \
         currentClass.convolution_planar_flow_with_jacobian_manually_calculated(tf.transpose(z0, perm=[1, 0, 2]),
                                                                                flow_params, numFlows, n_latent_dim,
-                                                                               filter_width=3)
+                                                                               filter_width=3, reshape="2D")
 elif flow_type == "NoFlow":
     z_k = z0
 

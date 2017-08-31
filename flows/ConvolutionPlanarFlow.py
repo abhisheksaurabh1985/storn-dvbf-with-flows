@@ -50,12 +50,15 @@ class ConvolutionPlanarFlow(object):
     @staticmethod
     def make_jacobian(y, x, num_obs):
         n = tf.shape(y)[-1]
+
+        print "@@@@@@@@@@@@@@@@@@@@@@@ make_jacobin @@@@@@@@@@@@@@@@@@@@@@@@@"
         print n
         print "y shape:", y.get_shape()
         print "x shape:", x.get_shape()
 
-        print tf.gradients(y, x)
-        print [tf.gradients(y[:, :, j], x)[0] for j in range(num_obs)]
+        # print len(tf.gradients(y, x))
+        # print tf.gradients(y, x)
+        # print [tf.gradients(y[:, :, j], x)[0] for j in range(num_obs)]
         #j = tf.constant(0)
         #l = tf.Variable([])
 
@@ -83,6 +86,41 @@ class ConvolutionPlanarFlow(object):
                                                          #                 tf.TensorShape(None)])
         print "Jacobian shape inside make_jacobian function", jacobian.stack().get_shape()
         return tf.transpose(jacobian.stack(), [1, 2, 0, 3])
+
+
+    @staticmethod
+    def make_jacobian_2D(y, x, num_obs):
+        """
+        :param y: shape is (b, t*d)
+        :param x: shape is (b, t*d)
+        :param num_obs: self.time_steps * self.z_dim
+        :return:
+        """
+        n = tf.shape(y)[-1]
+        print "@@@@@@@@@@@@@@@@@@@@@@@ make_jacobin @@@@@@@@@@@@@@@@@@@@@@@@@"
+        # print n
+        # print len(tf.gradients(y, x))  # length is 1.
+        # print tf.gradients(y, x)  # [None]
+        # print [tf.gradients(y[:, j], x)[0] for j in range(num_obs)]  # List with all elements as None.
+
+        loop_vars = [
+            tf.constant(0, tf.int32),
+            tf.TensorArray(tf.float32, size=num_obs),
+        ]
+
+        # There is some issue with tf.gradients. It returns a list of sum(dy/dx) for each x in xs.
+        def body(j, result):
+            if tf.gradients(y[:, j], x)[0] is not None:
+                return j + 1, result.write(j, tf.reshape(tf.gradients(y[:, j], x)[0], shape=[-1, num_obs]))
+            else:
+                return j + 1, result.write(j, tf.reshape(tf.zeros_like(x, dtype=tf.float32), shape=[-1, num_obs]))
+
+        def cond(j, result):
+            return j < num_obs
+
+        _, jacobian = tf.while_loop(cond, body, loop_vars)  # Shape of jacobian: (?, 20, 200)
+        print "Jacobian shape inside make_jacobian function", jacobian.stack().get_shape()
+        return tf.transpose(jacobian.stack(), [1, 0, 2])
 
     def convolution_planar_flow(self, z, flow_params, num_flows, n_latent_dim, filter_width=3, invert_condition=False):
         """
@@ -166,7 +204,7 @@ class ConvolutionPlanarFlow(object):
 
     def convolution_planar_flow_with_jacobian_manually_calculated(self, z, flow_params,
                                                                   num_flows, n_latent_dim, filter_width=3,
-                                                                  invert_condition=False):
+                                                                  invert_condition=False, reshape="3D"):
         """
         z shape: (bs,ts,?); us, bs shape: (ts, bs, ?); ws shape: (1, num_flows * filter_width * n_latent_dim * 1)
         """
@@ -214,38 +252,34 @@ class ConvolutionPlanarFlow(object):
                 print "transformed z shape:", z.get_shape()
                 print "dtanh wzb shape:", self.dtanh(wzb).get_shape()  # (bs, ts, 1)
 
-                # Step 4: This is the calculation of Jacobian. If this works, then calculation of psi and psi_ut may
-                # not be needed.
-                print "f_z shape", f_z.get_shape()
-                print "z shape", z.get_shape()
-                # jacobian_z = self.jacobian(tf.reshape(f_z, shape=[z.get_shape().as_list()[0], -1]), z)
-                # reshaped_f_z = tf.reshape(f_z, shape=[tf.shape(z)[0], self.time_steps * self.z_dim])
-                reshaped_f_z = tf.reshape(f_z, shape=[self.batch_size, self.time_steps * self.z_dim])
-                # reshaped_f_z = tf.reshape(f_z, shape=[z.get_shape().as_list()[0], 200])
-                print "reshaped f_z shape", reshaped_f_z.get_shape()
+                if reshape == "2D":
+                    # Step 4: This is the calculation of Jacobian. If this works, then calculation of psi and psi_ut may
+                    # not be needed.
+                    print "f_z shape", f_z.get_shape()
+                    print "z shape", z.get_shape()
+                    # jacobian_z = self.jacobian(tf.reshape(f_z, shape=[z.get_shape().as_list()[0], -1]), z)
+                    # reshaped_f_z = tf.reshape(f_z, shape=[tf.shape(z)[0], self.time_steps * self.z_dim])
+                    reshaped_f_z = tf.reshape(f_z, shape=[self.batch_size, self.time_steps * self.z_dim])
+                    # reshaped_f_z = tf.reshape(f_z, shape=[z.get_shape().as_list()[0], 200])
+                    print "reshaped f_z shape", reshaped_f_z.get_shape()
 
-                # reshaped_z = tf.reshape(z, shape=[tf.shape(z)[0], self.time_steps * self.z_dim])
-                reshaped_z = tf.reshape(z, shape=[self.batch_size, self.time_steps * self.z_dim])
-                print "reshaped z shape", reshaped_z.get_shape()
-
-                jacobian_z = self.make_jacobian(f_z,
-                                                z,
-                                                self.z_dim)
-
-                # jacobian_z = self.make_jacobian(reshaped_f_z,
-                #                                 reshaped_z,
-                #                                 self.time_steps * self.z_dim)
-                print "jacobian_z shape before adding jitter", jacobian_z.get_shape()
-                jacobian_z = tf.add(jacobian_z, 1e-6)
-                                    #tf.random_normal([self.batch_size, self.time_steps*self.z_dim,
-                                    #                  self.time_steps * self.z_dim],
-                                    #                 mean=0, stddev=1))
-                print "jacobian_z shape:", jacobian_z.get_shape()
-
-                # Determinant
+                    # reshaped_z = tf.reshape(z, shape=[tf.shape(z)[0], self.time_steps * self.z_dim])
+                    # reshaped_z = tf.reshape(z, shape=[self.batch_size, self.time_steps * self.z_dim])
+                    # print "reshaped z shape", reshaped_z.get_shape()
+                    jacobian_z = self.make_jacobian_2D(reshaped_f_z,
+                                                       z,
+                                                       self.time_steps * self.z_dim)
+                elif reshape == "3D":
+                    # Without reshaping
+                    jacobian_z = self.make_jacobian(f_z,
+                                                    z,
+                                                    self.z_dim)  # (20, 100, ?, ?)
+                print "jacobian_z shape", jacobian_z.get_shape()  # (?, ?, 200)
+                # # Determinant. Without expanding dims, the shape is (b,t). Post expansion, shape is (b,t,1).
+                # # determinant_jacobian = tf.matrix_determinant(jacobian_z, name="determinant_jacobian")
                 determinant_jacobian = tf.expand_dims(tf.matrix_determinant(jacobian_z,
                                                                             name="determinant_jacobian"), -1)
-                print "determinant_jacobian shape", determinant_jacobian.get_shape()
+                # print "determinant_jacobian shape", determinant_jacobian.get_shape()
                 # Step 4: First transpose the filter to match the dimensions of psi. Then rotate it for convolution.
                 # psi shape: (bs, ts, 2)
                 # psi = self.conv1d(self.dtanh(wzb), self.tf_rot180(tf.transpose(w, perm=[0, 2, 1])))

@@ -27,7 +27,8 @@ def train_nf(sess, loss_op, loss_summary, prob_dists, solver, nepochs, n_samples
             # batch_xs = dataset_utils.normalize_data(batch_xs)  # Use z-score normalization
             _, cost, res_summary, probability_distributions, jacob_z_out = sess.run([solver, loss_op, summary, prob_dists, jacobian_z],
                                                                        feed_dict={_X: batch_xs})
-            print jacob_z_out[np.nonzero(jacob_z_out > 1e-6)]
+            #print jacob_z_out[np.nonzero(jacob_z_out > 1e-4)]
+            # print jacob_z_out
             recons_loss = cost[0]
             kl_loss = cost[1]
             elbo_loss = cost[2]

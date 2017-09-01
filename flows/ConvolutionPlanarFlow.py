@@ -287,7 +287,9 @@ class ConvolutionPlanarFlow(object):
                 singular_values = tf.stop_gradient(tf.svd(jacobian_z, compute_uv=False))
                 print "singular_values shape:", singular_values.get_shape()
 
-                logdet_jacobian = tf.log(tf.reduce_prod(singular_values, axis=-1) + 1e-6)
+                # logdet_jacobian = tf.log(tf.reduce_prod(singular_values, axis=-1) + 1e-6)
+                logdet_jacobian = tf.reduce_mean(tf.log(singular_values + 1e-6), axis=-1)
+
                 # tf.stop_gradient(singular_value, name="stop_gradient_svd")
                 # singular_value = np.linalg.svd(determinant_jacobian, compute_uv=0)
                 # logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10), axis=1)

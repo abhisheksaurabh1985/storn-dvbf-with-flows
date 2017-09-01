@@ -9,7 +9,7 @@ from data_source import dataset_utils
 
 def train_nf(sess, loss_op, loss_summary, prob_dists, solver, nepochs, n_samples, batch_size,
              display_step, _X, data, summary=None, file_writer=None, flow_type=None, output_dir=None,
-             jacobian_z=None):
+             jacobian_z=None, sum_logdetjames=None):
 
     avg_recons_loss, avg_kl_loss, avg_elbo_loss = [], [], []
     avg_log_q0_z0, avg_log_qk_zk, avg_log_p_x_given_zk, avg_log_p_zk, avg_sum_logdetj = [], [], [], [], []
@@ -25,10 +25,15 @@ def train_nf(sess, loss_op, loss_summary, prob_dists, solver, nepochs, n_samples
         for i in range(total_batch):
             batch_xs = data.train.next_batch(batch_size)
             # batch_xs = dataset_utils.normalize_data(batch_xs)  # Use z-score normalization
-            _, cost, res_summary, probability_distributions, jacob_z_out = sess.run([solver, loss_op, summary, prob_dists, jacobian_z],
+            print "sum_logdetj", sum_logdetjames
+            _, cost, res_summary, probability_distributions, jacob_z_out, sldj = sess.run([solver, loss_op, summary, prob_dists, jacobian_z, sum_logdetjames],
                                                                        feed_dict={_X: batch_xs})
             # print jacob_z_out[np.nonzero(jacob_z_out > 1e-4)]
-            # print jacob_z_out
+            print "======================================="
+            print "sldj =", sldj
+            print "jacob_z_out.shape: ", jacob_z_out.shape
+            print jacob_z_out
+            print "======================================="
             recons_loss = cost[0]
             kl_loss = cost[1]
             elbo_loss = cost[2]

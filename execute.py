@@ -30,7 +30,6 @@ tf.set_random_seed(1234)
 # from tensorflow.python import debug as tf_debug
 # from matplotlib import pyplot as plt
 
-
 # Dataset parameters
 n_samples = 1000
 n_timesteps = 100
@@ -41,7 +40,7 @@ HU_enc = 128
 HU_dec = 128
 mb_size = 20
 learning_rate = 0.0001  # 0.0001 for Planar works well.
-training_epochs = 500
+training_epochs = 30
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -54,7 +53,7 @@ activation_function = tf.nn.relu
 flow_type = "ConvolutionPlanar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
-numFlows = 2  # Number of times flow has to be applied.
+numFlows = 4  # Number of times flow has to be applied.
 apply_invertibility_condition = True
 beta = False
 
@@ -345,7 +344,7 @@ if not restore_model:
         average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
                                       solver, training_epochs, n_samples, mb_size,
                                       display_step, _X, datasets, merged_summary_op, file_writer, flow_type, output_dir,
-                                      jacobian_z)
+                                      jacobian_z, sum_logdet_jacobian)
     elif flow_type == "Radial":
         average_cost = train.train_nf(sess, loss_op, summary_losses, probability_distributions,
                                       solver, training_epochs, n_samples, mb_size,

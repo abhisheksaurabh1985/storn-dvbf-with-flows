@@ -30,6 +30,45 @@ class ConvolutionPlanarFlow(object):
         return tf.reverse(filtr, axis=ax)
 
     @staticmethod
+    def get_indices_of_diagonal_elements(n):
+        """
+        Jacoabian matrix in case of Convolution Planar flow is n*n matrix.
+        :param n: Number of columns
+        :return: Indices of the diagonal elements. Diagonal implies main, first and second upper and lower diagonals.
+        """
+        indices_diagonal, indices_first_upper_diagonal, \
+        indices_second_upper_diagonal, indices_first_lower_diagonal, indices_second_lower_diagonal = [], [], [], [], []
+
+        # n = 200
+
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", n
+
+        for i in range(n):
+            indices_diagonal.append(i * (n + 1))
+
+            if i == (n-1):
+                pass
+            else:
+                indices_first_upper_diagonal.append(i * (n + 1) + 1)
+
+            if i == (n-1) or i == (n-2):
+                pass
+            else:
+                indices_second_upper_diagonal.append(i * (n + 1) + 2)
+
+            if i == 0:
+                pass
+            else:
+                indices_first_lower_diagonal.append(i * (n + 1) - 1)
+            if i == 0 or i == 1:
+                pass
+            else:
+                indices_second_lower_diagonal.append(i * (n + 1) - 2)
+
+        return indices_diagonal, indices_first_upper_diagonal, indices_second_upper_diagonal, \
+               indices_first_lower_diagonal, indices_second_lower_diagonal
+
+    @staticmethod
     def conv1d(z, W, strides=1):
         """
         z shape: (bs, ts, ?), w shape: (3, 2, 1). input_channel =2 for the filter corresponds to the two dimensions of
@@ -115,17 +154,26 @@ class ConvolutionPlanarFlow(object):
         loop_vars = [
             tf.constant(0, tf.int32),
             tf.TensorArray(tf.float32, size=num_obs),
-        ]
+        ] # This is a list of tensors that is passed to both cond and body.
 
         def body(j, result):
+            """
+            body is a callable returning a (possibly nested) tuple, namedtuple or list of tensors of the same arity
+            (length and structure) and types as loop_vars.
+            """
             if tf.gradients(y[:, j], x)[0] is not None:
                 return j + 1, result.write(j, tf.reshape(tf.gradients(y[:, j], x)[0], shape=[-1, num_obs]))
             else:
                 return j + 1, result.write(j, tf.reshape(tf.zeros_like(x, dtype=tf.float32), shape=[-1, num_obs]))
 
         def cond(j, result):
+            """
+            cond is a callable returning a boolean scalar tensor. cond and body both take as many arguments as there are
+            loop_vars. Hence, we have to pass 'result' here despite the fact that result will not be used here.
+            """
             return j < num_obs
 
+        # tf.while_loo: Repeat body while the condition cond is true.
         _, jacobian = tf.while_loop(cond, body, loop_vars)  # Shape of jacobian: (?, 20, 200)
         print "Jacobian shape inside make_jacobian function", jacobian.stack().get_shape()
         return tf.transpose(jacobian.stack(), [1, 0, 2])
@@ -149,6 +197,18 @@ class ConvolutionPlanarFlow(object):
         if num_flows == 0:
             sum_logdet_jacobian = tf.Variable(0.0, dtype=tf.float32)
         else:
+
+            # Get indices of the diagonal matrix in the jacobian matrix which will be calculated later.
+            number_of_columns_in_jacobian_matrix = self.time_steps * self.z_dim
+            n_col = tf.constant(number_of_columns_in_jacobian_matrix, dtype=tf.int32, name="ncol_jacobian_matrix")
+            idx_diag, idx_first_upper_diag, idx_second_upper_diag, \
+            idx_first_lower_diag, idx_second_lower_diag = \
+                tf.py_func(self.get_indices_of_diagonal_elements, [n_col], [tf.int32, tf.int32, tf.int32, tf.int32, tf.int32])
+
+            print "############### Length of lists ######################"
+            print idx_diag.get_shape() # len(idx_first_upper_diag), len(idx_second_upper_diag), len(idx_first_lower_diag), \
+                  # len(idx_second_lower_diag)
+
             for k in range(num_flows):
                 u, w, b = us[:, :, k * n_latent_dim:(k + 1) * n_latent_dim], \
                           ws[:, k * filter_width * n_latent_dim * 1:(k + 1) * filter_width * n_latent_dim * 1], \
@@ -170,6 +230,7 @@ class ConvolutionPlanarFlow(object):
                 # which is actually called by tf.nn.conv1d, performs a correlation rather than convolution.
                 # z shape: (bs, ts, ?), w shape: (3, 2, 1)
                 wz = self.conv1d(z, w)  # wz shape: (bs, ts, 1)
+                # wz = self.conv1d(z, self.tf_rot180(w))
                 print "wz shape:", wz.get_shape()
                 print "b with dims expanded:", tf.expand_dims(b, 2)
 
@@ -185,6 +246,12 @@ class ConvolutionPlanarFlow(object):
                 print "transformed z shape:", z.get_shape()
                 print "dtanh wzb shape:", self.dtanh(wzb).get_shape()  # (bs, ts, 1)
 
+                # psi = self.conv1d(self.dtanh(wzb), self.tf_rot180(tf.transpose(w, perm=[0, 2, 1])))
+                # print "psi shape:", psi.get_shape()
+                # print "u shape:", u.get_shape()
+                # psi_ut = tf.matmul(u, tf.transpose(psi, perm=[0, 2, 1], name="psi_transpose"))
+                # print "psi_ut shape:", psi_ut.get_shape()
+
                 # Step 4: Jacobian matrix
                 if reshape == "2D":
                     # USE THIS ONE
@@ -196,9 +263,8 @@ class ConvolutionPlanarFlow(object):
                     jacobian_z = self.make_jacobian_2D(reshaped_f_z, z, self.time_steps * self.z_dim)  # (?, ?, 200). The second ? refers to 200.
                 elif reshape == "3D":
                     # Without reshaping
-                    jacobian_z = self.make_jacobian(f_z,
-                                                    z,
-                                                    self.z_dim)  # (?, ?, 200)
+                    jacobian_z = self.make_jacobian(f_z, z, self.z_dim)  # (?, ?, 200)
+
                 print "=========================================="
                 print "jacobian_z shape", jacobian_z.get_shape()
                 print "=========================================="
@@ -208,21 +274,46 @@ class ConvolutionPlanarFlow(object):
                 jacobian_z = tf.Print(jacobian_z, [tf.constant("jacobian_z"), tf.reduce_max(jacobian_z),
                                                    tf.reduce_min(jacobian_z), tf.reduce_mean(jacobian_z)])
 
-                determinant_jacobian = tf.matrix_determinant(jacobian_z, name="determinant_jacobian")
-                print "determinant_jacobian shape:", determinant_jacobian.get_shape()
-                determinant_jacobian = tf.Print(determinant_jacobian, [determinant_jacobian])
-                # diagonal_elements = tf.diag_part(jacobian_z)
-                # determinant_jacobian = tf.expand_dims(tf.matrix_determinant(jacobian_z,
-                #                                                             name="determinant_jacobian"), -1)
+                main_diagonal = tf.matrix_diag_part(jacobian_z, "main_diagonal")
+                print "main diagonal shape:", main_diagonal.get_shape()
 
-                # # logdet_jacobian = tf.log(tf.abs(1 + psi_ut) + 1e-10)  # logdet_jacobian shape: (bs, ts, 2)
-                logdet_jacobian = tf.log(tf.abs(determinant_jacobian) + 1e-10)  # logdet_jacobian shape: (bs, ts, 2)
+                # First upper diagonal
+                first_upper_diagonal = tf.matrix_diag_part(tf.slice(jacobian_z,
+                                                                    begin=[0, 0, 1],
+                                                                    size=[-1, (self.time_steps*self.z_dim)-1,
+                                                                              (self.time_steps*self.z_dim)],
+                                                                    name="slice_for_first_upper_diagonal"),
+                                                           name="first_upper_diagonal")
+                print "first upper diagonal shape:", first_upper_diagonal.get_shape()
 
-                # Determinant using SVD
-                # singular_values = tf.stop_gradient(tf.svd(jacobian_z, compute_uv=False))
-                # print "singular_values shape:", singular_values.get_shape()
-                # # logdet_jacobian = tf.log(tf.reduce_prod(singular_values, axis=-1) + 1e-6)
-                # logdet_jacobian = tf.reduce_mean(tf.log(singular_values + 1e-6), axis=-1)
+                # Second upper diagonal
+                second_upper_diagonal = tf.matrix_diag_part(tf.slice(jacobian_z,
+                                                                     begin=[0, 0, 2],
+                                                                     size=[-1, (self.time_steps*self.z_dim)-2,
+                                                                               (self.time_steps*self.z_dim)],
+                                                                     name="slice_for_second_upper_diagonal"),
+                                                            name="first_upper_diagonal")
+                print "second upper diagonal shape:", second_upper_diagonal.get_shape()
+
+                # First lower diagonal
+                first_lower_diagonal = tf.matrix_diag_part(tf.slice(jacobian_z,
+                                                                    begin=[0, 1, 0],
+                                                                    size=[-1, (self.time_steps*self.z_dim),
+                                                                              (self.time_steps*self.z_dim)-1],
+                                                                    name="slice_for_first_lower_diagonal"),
+                                                           name="first_upper_diagonal")
+                print "first lower diagonal shape:", first_lower_diagonal.get_shape()
+
+                # Second lower diagonal
+                second_lower_diagonal = tf.matrix_diag_part(tf.slice(jacobian_z,
+                                                                     begin=[0, 2, 0],
+                                                                     size=[-1, (self.time_steps*self.z_dim),
+                                                                              (self.time_steps*self.z_dim)-2],
+                                                                     name="slice_for_second_lower_diagonal"),
+                                                            name="second_upper_diagonal")
+                print "second lower diagonal shape:", second_lower_diagonal.get_shape()
+
+
 
                 # Determinant using LU decomposition
 

@@ -32,7 +32,7 @@ def train_nf(sess, loss_op, loss_summary, prob_dists, solver, nepochs, n_samples
             print "======================================="
             print "sldj =", sldj
             print "jacob_z_out.shape: ", jacob_z_out.shape
-            print jacob_z_out
+            # print jacob_z_out
             # plt.spy(jacob_z_out[0, 0:50, 0:50], markersize=2)
             # plt.show()
             print "======================================="

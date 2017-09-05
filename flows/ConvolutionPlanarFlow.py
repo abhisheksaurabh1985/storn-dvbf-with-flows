@@ -1,5 +1,7 @@
 import numpy as np
 import tensorflow as tf
+import scipy
+import scipy.linalg   # SciPy Linear Algebra Library
 
 
 class ConvolutionPlanarFlow(object):
@@ -67,6 +69,11 @@ class ConvolutionPlanarFlow(object):
 
         return indices_diagonal, indices_first_upper_diagonal, indices_second_upper_diagonal, \
                indices_first_lower_diagonal, indices_second_lower_diagonal
+
+    @staticmethod
+    def get_LU_decomposition(A):
+        P, L, U = scipy.linalg.lu(A)
+        return P, L, U
 
     @staticmethod
     def conv1d(z, W, strides=1):
@@ -277,7 +284,8 @@ class ConvolutionPlanarFlow(object):
                 main_diagonal = tf.matrix_diag_part(jacobian_z, "main_diagonal")
                 print "main diagonal shape:", main_diagonal.get_shape()
 
-                # First upper diagonal
+                # First upper diagonal. Remove the first column and last row. Follow a similar process for second upper,
+                # first and second lower diagonal as well.
                 first_upper_diagonal = tf.matrix_diag_part(tf.slice(jacobian_z,
                                                                     begin=[0, 0, 1],
                                                                     size=[-1, (self.time_steps*self.z_dim)-1,
@@ -313,21 +321,24 @@ class ConvolutionPlanarFlow(object):
                                                             name="second_upper_diagonal")
                 print "second lower diagonal shape:", second_lower_diagonal.get_shape()
 
+                # determinant_jacobian = tf.reduce_prod(main_diagonal, axis=1, name="determinant_jacobian")
+                determinant_jacobian = tf.matrix_determinant(jacobian_z, name="jacobian_matrix_determinant")
+                print "determinant_jacobian shape:", determinant_jacobian.get_shape()
 
-
-                # Determinant using LU decomposition
-
+                logdet_jacobian = tf.log(determinant_jacobian + 1e-6, name="logdet_jacobian")
                 print "logdet_jacobian shape:", logdet_jacobian.get_shape()
+
                 # _logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10))
                 log_detjs.append(tf.expand_dims(logdet_jacobian, axis=1))
                 # log_detjs.append(logdet_jacobian)
+                print "shape of first element in list:", tf.shape(log_detjs[0])
                 print "shape of first element in list:", log_detjs[0].get_shape()
             # Concatenated vertically. Below, logdet_jacobian shape: (bs, numFlows*ts, 2).
-            logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
+            logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=0)
             print "#######@@@@@@@@@@!!!!!!!!!!!1##########@@@@@@@@@@!!!!!!!!!"
             print "logdet_jacobian inside Convolution Planar flow:", logdet_jacobian.get_shape()
             sum_logdet_jacobian = tf.reduce_sum(logdet_jacobian)  # shape: ()
-            print "#######@@@@@@@@@@!!!!!!!!!!!1##########@@@@@@@@@@!!!!!!!!!"
+            print "#######@@@@@@@@@@ !!!!!!!!!!! ##########@@@@@@@@@@!!!!!!!!!"
             print "sum_logdet_jacobian inside Convolution Planar flow:", sum_logdet_jacobian.get_shape()
         return tf.transpose(z, perm=[1, 0, 2]), sum_logdet_jacobian, jacobian_z
 

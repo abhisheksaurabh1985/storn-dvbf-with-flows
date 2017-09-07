@@ -103,3 +103,10 @@ imageio.core.fetching.NeedDownloadError: Need ffmpeg exe. You can download it by
 * Latent space plot * 
 - latent data: (bs, ts, d). Reshape it as (-1,2). Scatter plot this data. Take a point in the batch and trace its path 
 in the latent space. 
+
+
+*Report*
+- Combine results of all other flows i.e. comparison of flows, comparison of flow length and probability distribution, 
+generative samples and latent space.  
+- Section on Convolution Planar, Interpretation, Figure of the Jacobian matrix, reason why it failed or why was it 
+expected to work in the first place. 

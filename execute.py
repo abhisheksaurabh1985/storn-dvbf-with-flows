@@ -39,7 +39,7 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 20
-learning_rate = 1e-3  # For NF, PF and RF 0.0001 works well.
+learning_rate = 1e-5  # For NF, PF and RF 0.0001 works well.
 training_epochs = 10000
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
@@ -102,7 +102,7 @@ if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow" or fl
     logs_path = './tf_logs/'
 
 # Optimizer
-optimizer = tf.train.AdamOptimizer
+optimizer = tf.train.AdagradOptimizer  # tf.train.AdamOptimizer
 
 # Normalize data
 normalize_data = False  # Always use False.

@@ -323,21 +323,21 @@ class ConvolutionPlanarFlow(object):
 
                 # determinant_jacobian = tf.reduce_prod(main_diagonal, axis=1, name="determinant_jacobian")
                 determinant_jacobian = tf.matrix_determinant(jacobian_z, name="jacobian_matrix_determinant")
-                print "determinant_jacobian shape:", determinant_jacobian.get_shape()
+                print "determinant_jacobian shape:", determinant_jacobian.get_shape()  # (?,)
 
                 logdet_jacobian = tf.log(determinant_jacobian + 1e-6, name="logdet_jacobian")
-                print "logdet_jacobian shape:", logdet_jacobian.get_shape()
+                print "logdet_jacobian shape:", logdet_jacobian.get_shape()  # (?,)
 
                 # _logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10))
                 log_detjs.append(tf.expand_dims(logdet_jacobian, axis=1))
                 # log_detjs.append(logdet_jacobian)
                 print "shape of first element in list:", tf.shape(log_detjs[0])
-                print "shape of first element in list:", log_detjs[0].get_shape()
+                print "shape of first element in list:", log_detjs[0].get_shape()  # (?, 1)
             # Concatenated vertically. Below, logdet_jacobian shape: (bs, numFlows*ts, 2).
-            logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=0)
+            logdet_jacobian = tf.concat(log_detjs[0:num_flows + 1], axis=1)
             print "#######@@@@@@@@@@!!!!!!!!!!!1##########@@@@@@@@@@!!!!!!!!!"
-            print "logdet_jacobian inside Convolution Planar flow:", logdet_jacobian.get_shape()
-            sum_logdet_jacobian = tf.reduce_sum(logdet_jacobian)  # shape: ()
+            print "logdet_jacobian inside Convolution Planar flow:", logdet_jacobian.get_shape()  # (?, 4)
+            sum_logdet_jacobian = tf.reduce_sum(logdet_jacobian, axis=1)  # shape: ()
             print "#######@@@@@@@@@@ !!!!!!!!!!! ##########@@@@@@@@@@!!!!!!!!!"
             print "sum_logdet_jacobian inside Convolution Planar flow:", sum_logdet_jacobian.get_shape()
         return tf.transpose(z, perm=[1, 0, 2]), sum_logdet_jacobian, jacobian_z

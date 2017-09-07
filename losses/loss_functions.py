@@ -102,7 +102,7 @@ def elbo_loss(actual, prediction, beta=True, global_step=tf.Variable(0, trainabl
         else:
             log_p_x_given_zk = - tf.reduce_mean(tf.reduce_sum(recons_error_func(actual, dec_mean, dec_var), axis=2))
             # log_p_zk = tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, tf.zeros_like(mu), tf.ones_like(mu)), axis=2))
-            log_p_zk = tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, 0.0, 1.0), axis=2))
+            log_p_zk = tf.reduce_mean(tf.reduce_sum(gaussian_log_pdf(zk, 0.0, 0.1), axis=2)) # For CPF changed from 1.0 to 0.001.
         # recons_loss = tf.reduce_mean(log_p_x_given_zk, name="reconstruction_loss")
         recons_loss = - log_p_x_given_zk
         # kl_loss = tf.reduce_mean(log_qk_zk - log_p_zk, name="kl_loss")

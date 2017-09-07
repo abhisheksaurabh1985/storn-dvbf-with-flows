@@ -39,8 +39,8 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 20
-learning_rate = 0.000001  # For NF, PF and RF 0.0001 works well.
-training_epochs = 50
+learning_rate = 1e-3  # For NF, PF and RF 0.0001 works well.
+training_epochs = 10000
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -55,7 +55,7 @@ flow_type = "ConvolutionPlanar"  # "ConvolutionPlanar", "Planar", "Radial", "NoF
 # Flow parameters
 numFlows = 4  # Number of times flow has to be applied.
 apply_invertibility_condition = True
-beta = False
+beta = True
 
 # Plot parameters
 points_to_plot = [0, 2, 4, 6, 8, 10]  # Points in the mini batches which are to be reconstructed and plotted

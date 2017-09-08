@@ -2,8 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="25c19493-6784-49a5-9b96-9f84f1a1f013" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/analysis/compare_flow_lengths.py" afterPath="" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/analysis/compare_flow_lengths_rf.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/analysis/compare_distributions.py" afterPath="$PROJECT_DIR$/analysis/compare_distributions.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/analysis/compare_flow_lengths_pf.py" afterPath="$PROJECT_DIR$/analysis/compare_flow_lengths_pf.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/analysis/compare_losses.py" afterPath="$PROJECT_DIR$/analysis/compare_losses.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/analysis/generative_samples_comparison.py" afterPath="$PROJECT_DIR$/analysis/generative_samples_comparison.py" />
     </list>
     <ignored path="$PROJECT_DIR$/.idea/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -44,8 +48,8 @@
       <file leaf-file-name="scratch_9.py" pinned="false" current-in-tab="false">
         <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_9.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="446">
-              <caret line="42" column="0" lean-forward="false" selection-start-line="39" selection-start-column="0" selection-end-line="42" selection-end-column="0" />
+            <state relative-caret-position="170">
+              <caret line="30" column="57" lean-forward="false" selection-start-line="30" selection-start-column="57" selection-end-line="30" selection-end-column="57" />
               <folding>
                 <element signature="e#0#50#0" expanded="true" />
               </folding>
@@ -53,33 +57,43 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="generative_samples.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/plots/generative_samples.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3807">
-              <caret line="20" column="40" lean-forward="false" selection-start-line="20" selection-start-column="40" selection-end-line="20" selection-end-column="40" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="compare_losses.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analysis/compare_losses.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="161">
-              <caret line="136" column="0" lean-forward="true" selection-start-line="136" selection-start-column="0" selection-end-line="136" selection-end-column="0" />
+            <state relative-caret-position="155">
+              <caret line="51" column="68" lean-forward="false" selection-start-line="51" selection-start-column="68" selection-end-line="51" selection-end-column="68" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="compare_flow_lengths_pf.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="compare_flow_lengths_pf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analysis/compare_flow_lengths_pf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="379">
-              <caret line="162" column="17" lean-forward="false" selection-start-line="162" selection-start-column="17" selection-end-line="162" selection-end-column="17" />
+            <state relative-caret-position="387">
+              <caret line="153" column="86" lean-forward="true" selection-start-line="153" selection-start-column="86" selection-end-line="153" selection-end-column="86" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="compare_flow_lengths_rf.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/analysis/compare_flow_lengths_rf.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="414">
+              <caret line="153" column="86" lean-forward="false" selection-start-line="153" selection-start-column="86" selection-end-line="153" selection-end-column="86" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="generative_samples_comparison.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/analysis/generative_samples_comparison.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2921">
+              <caret line="127" column="20" lean-forward="false" selection-start-line="127" selection-start-column="20" selection-end-line="127" selection-end-column="20" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#23#35#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -108,21 +122,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="compare_distributions.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="compare_distributions.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/analysis/compare_distributions.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="161">
-              <caret line="10" column="52" lean-forward="false" selection-start-line="10" selection-start-column="52" selection-end-line="10" selection-end-column="52" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="junk.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/junk.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-657">
-              <caret line="330" column="66" lean-forward="false" selection-start-line="330" selection-start-column="66" selection-end-line="330" selection-end-column="66" />
+              <caret line="10" column="3" lean-forward="true" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
               <folding />
             </state>
           </provider>
@@ -139,7 +143,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>datasets.train</find>
       <find>NoFlo</find>
       <find>XU</find>
       <find>corresponding_shuffle</find>
@@ -169,6 +172,7 @@
       <find>remove_outlier</find>
       <find>no_flow_logfile_path</find>
       <find>compare_losses_across_models</find>
+      <find>pf_</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -201,15 +205,12 @@
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_5.py" />
         <option value="$PROJECT_DIR$/generative_sample.py" />
         <option value="$PROJECT_DIR$/plots/helper_functions.py" />
-        <option value="$PROJECT_DIR$/analysis/compare_distributions.py" />
-        <option value="$PROJECT_DIR$/analysis/compare_losses.py" />
         <option value="$PROJECT_DIR$/images_actual_data.py" />
         <option value="$PROJECT_DIR$/plots/generative_samples.py" />
         <option value="$PROJECT_DIR$/storn.py" />
         <option value="$PROJECT_DIR$/plots/plots.py" />
         <option value="$PROJECT_DIR$/data_source/dataset.py" />
         <option value="$PROJECT_DIR$/data_source/__init__.py" />
-        <option value="$PROJECT_DIR$/analysis/generative_samples_comparison.py" />
         <option value="$PROJECT_DIR$/data_source/data_set.py" />
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_8.py" />
         <option value="$PROJECT_DIR$/flows/ConvolutionPlanarFlow.py" />
@@ -221,7 +222,11 @@
         <option value="$PROJECT_DIR$/losses/loss_functions.py" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/analysis/compare_flow_lengths.py" />
+        <option value="$PROJECT_DIR$/analysis/compare_flow_lengths_rf.py" />
         <option value="$PROJECT_DIR$/analysis/compare_flow_lengths_pf.py" />
+        <option value="$PROJECT_DIR$/analysis/generative_samples_comparison.py" />
+        <option value="$PROJECT_DIR$/analysis/compare_losses.py" />
+        <option value="$PROJECT_DIR$/analysis/compare_distributions.py" />
       </list>
     </option>
   </component>
@@ -442,25 +447,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.compare_flow_lengths_pf">
-    <configuration default="false" name="execute" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="storn_dvbf_with_flows" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/execute.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
+  <component name="RunManager" selected="Python.compare_distributions">
     <configuration default="false" name="generative_samples_comparison" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -479,42 +466,6 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <method />
     </configuration>
-    <configuration default="false" name="data_set" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="storn_dvbf_with_flows" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/data_source/data_set.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="plot_latent_space" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/analysis" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="storn_dvbf_with_flows" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/analysis/plot_latent_space.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
     <configuration default="false" name="compare_flow_lengths_pf" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -528,6 +479,60 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="storn_dvbf_with_flows" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/analysis/compare_flow_lengths_pf.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="compare_flow_lengths_rf" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/analysis" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="storn_dvbf_with_flows" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/analysis/compare_flow_lengths_rf.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="compare_losses" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/analysis" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="storn_dvbf_with_flows" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/analysis/compare_losses.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="compare_distributions" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/analysis" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="storn_dvbf_with_flows" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/analysis/compare_distributions.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -620,19 +625,19 @@
     </configuration>
     <list size="6">
       <item index="0" class="java.lang.String" itemvalue="Python.scratch_4" />
-      <item index="1" class="java.lang.String" itemvalue="Python.execute" />
-      <item index="2" class="java.lang.String" itemvalue="Python.generative_samples_comparison" />
-      <item index="3" class="java.lang.String" itemvalue="Python.data_set" />
-      <item index="4" class="java.lang.String" itemvalue="Python.plot_latent_space" />
-      <item index="5" class="java.lang.String" itemvalue="Python.compare_flow_lengths_pf" />
+      <item index="1" class="java.lang.String" itemvalue="Python.generative_samples_comparison" />
+      <item index="2" class="java.lang.String" itemvalue="Python.compare_flow_lengths_pf" />
+      <item index="3" class="java.lang.String" itemvalue="Python.compare_flow_lengths_rf" />
+      <item index="4" class="java.lang.String" itemvalue="Python.compare_losses" />
+      <item index="5" class="java.lang.String" itemvalue="Python.compare_distributions" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.compare_flow_lengths_pf" />
-        <item index="1" class="java.lang.String" itemvalue="Python.plot_latent_space" />
-        <item index="2" class="java.lang.String" itemvalue="Python.execute" />
-        <item index="3" class="java.lang.String" itemvalue="Python.generative_samples_comparison" />
-        <item index="4" class="java.lang.String" itemvalue="Python.data_set" />
+        <item index="0" class="java.lang.String" itemvalue="Python.compare_distributions" />
+        <item index="1" class="java.lang.String" itemvalue="Python.compare_losses" />
+        <item index="2" class="java.lang.String" itemvalue="Python.generative_samples_comparison" />
+        <item index="3" class="java.lang.String" itemvalue="Python.compare_flow_lengths_rf" />
+        <item index="4" class="java.lang.String" itemvalue="Python.compare_flow_lengths_pf" />
       </list>
     </recent_temporary>
   </component>
@@ -671,15 +676,15 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32967034" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
       <window_info id="Debug Logs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.17692308" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.42857143" sideWeight="0.50196964" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20879121" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30329672" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32967034" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2736264" sideWeight="0.4980304" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Execute Anonymous" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32967034" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3802198" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.22341025" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.14687675" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32857144" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24985932" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24835165" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3879121" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32976928" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Salesforce" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.32967034" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -704,7 +709,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/analysis/generative_samples_comparison.py</url>
-          <line>140</line>
+          <line>142</line>
           <option name="timeStamp" value="37" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -712,13 +717,17 @@
           <line>21</line>
           <option name="timeStamp" value="38" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/analysis/generative_samples_comparison.py</url>
+          <line>81</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="39" />
+      <option name="time" value="41" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/scratch_pad.py" />
     <entry file="file://$PROJECT_DIR$/../../venv/local/lib/python2.7/site-packages/tensorflow/python/ops/math_ops.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="114">
@@ -967,7 +976,7 @@
         <state relative-caret-position="226">
           <caret line="324" column="108" lean-forward="false" selection-start-line="324" selection-start-column="16" selection-end-line="324" selection-end-column="108" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -976,32 +985,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-657">
           <caret line="330" column="66" lean-forward="false" selection-start-line="330" selection-start-column="66" selection-end-line="330" selection-end-column="66" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analysis/compare_distributions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="161">
-          <caret line="10" column="52" lean-forward="false" selection-start-line="10" selection-start-column="52" selection-end-line="10" selection-end-column="52" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analysis/generative_samples_comparison.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2703">
-          <caret line="9" column="29" lean-forward="true" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="29" />
-          <folding>
-            <element signature="e#23#35#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/plots/generative_samples.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3807">
-          <caret line="20" column="40" lean-forward="false" selection-start-line="20" selection-start-column="40" selection-end-line="20" selection-end-column="40" />
           <folding />
         </state>
       </provider>
@@ -1028,16 +1011,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="230">
           <caret line="10" column="0" lean-forward="true" selection-start-line="10" selection-start-column="0" selection-end-line="10" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#50#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_9.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="446">
-          <caret line="42" column="0" lean-forward="false" selection-start-line="39" selection-start-column="0" selection-end-line="42" selection-end-column="0" />
           <folding>
             <element signature="e#0#50#0" expanded="true" />
           </folding>
@@ -1097,21 +1070,63 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/plots/generative_samples.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1978">
+          <caret line="20" column="40" lean-forward="false" selection-start-line="20" selection-start-column="40" selection-end-line="20" selection-end-column="40" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_9.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="30" column="57" lean-forward="false" selection-start-line="30" selection-start-column="57" selection-end-line="30" selection-end-column="57" />
+          <folding>
+            <element signature="e#0#50#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analysis/generative_samples_comparison.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2921">
+          <caret line="127" column="20" lean-forward="false" selection-start-line="127" selection-start-column="20" selection-end-line="127" selection-end-column="20" />
+          <folding>
+            <element signature="e#23#35#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/analysis/compare_losses.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="161">
-          <caret line="136" column="0" lean-forward="true" selection-start-line="136" selection-start-column="0" selection-end-line="136" selection-end-column="0" />
+        <state relative-caret-position="155">
+          <caret line="51" column="68" lean-forward="false" selection-start-line="51" selection-start-column="68" selection-end-line="51" selection-end-column="68" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/analysis/compare_flow_lengths_pf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="379">
-          <caret line="162" column="17" lean-forward="false" selection-start-line="162" selection-start-column="17" selection-end-line="162" selection-end-column="17" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="387">
+          <caret line="153" column="86" lean-forward="true" selection-start-line="153" selection-start-column="86" selection-end-line="153" selection-end-column="86" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analysis/compare_flow_lengths_rf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="414">
+          <caret line="153" column="86" lean-forward="false" selection-start-line="153" selection-start-column="86" selection-end-line="153" selection-end-column="86" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analysis/compare_distributions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="10" column="3" lean-forward="true" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
+          <folding />
         </state>
       </provider>
     </entry>

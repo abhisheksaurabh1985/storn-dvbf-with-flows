@@ -69,8 +69,10 @@ def plot_signals_and_generative_samples(n_time_steps, cut_off_time_step, n_featu
 
 if __name__ == '__main__':
     # Step 1: Set up the input and the output directory.
-    input_dir = "./results_worth_saving/generative_samples/"
-    output_dir = "./results_worth_saving/generative_samples"
+    input_dir = "/home/abhishek/Dropbox/MAI/Internship-Thesis/TUM-Smagt/Thesis/results_worth_saving/generative_samples/"
+    output_dir = "/home/abhishek/Dropbox/MAI/Internship-Thesis/TUM-Smagt/Thesis/results_worth_saving/generative_samples/"
+    # input_dir = "./results_worth_saving/generative_samples/"
+    # output_dir = "./results_worth_saving/generative_samples"
 
     # Step 2: Get the file names of the pickled files corresponding to each model and actual data. Note that there are
     # as many pickled files containing actual data as there are models. Though we'll be loading each of these, we'll be
@@ -123,9 +125,9 @@ if __name__ == '__main__':
 
     # Prepare data for the plot function
     num_time_steps = nf_gs.shape[0]  # Get a list of time steps
-    cut_off_time = 50
+    cut_off_time = 5
     num_features = nf_gs.shape[2] - 1
-    flow_types = ["NF"]  # ["NF", "PF", "RF", "CPF"]
+    flow_types = ["NF", "PF", "RF"]  # ["NF", "PF", "RF", "CPF"]
     plot_titles = ["Cosine", "Sine", "Angular Velocity", "Reward"]
     nf_actual_data = [nf_cos_actual, nf_sine_actual, nf_w_actual, nf_reward_actual]
     nf_gs_data = [nf_cos_gs, nf_sine_gs, nf_w_gs, nf_reward_gs]

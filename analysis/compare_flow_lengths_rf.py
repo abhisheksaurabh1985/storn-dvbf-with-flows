@@ -1,4 +1,5 @@
 import os
+import numpy as np
 # from plots.helper_functions import *
 import plots
 import matplotlib.pyplot as plt

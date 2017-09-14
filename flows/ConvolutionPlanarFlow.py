@@ -324,8 +324,8 @@ class ConvolutionPlanarFlow(object):
                 # determinant_jacobian = tf.reduce_prod(main_diagonal, axis=1, name="determinant_jacobian")
                 determinant_jacobian = tf.matrix_determinant(jacobian_z, name="jacobian_matrix_determinant")
                 print "determinant_jacobian shape:", determinant_jacobian.get_shape()  # (?,)
-
-                logdet_jacobian = tf.log(determinant_jacobian + 1e-6, name="logdet_jacobian")
+                logdet_jacobian = tf.log(tf.abs(determinant_jacobian, name="absolute_value_logdet") + 1e-5,
+                                         name="logdet_jacobian")
                 print "logdet_jacobian shape:", logdet_jacobian.get_shape()  # (?,)
 
                 # _logdet_jacobian = tf.reduce_sum(tf.log(singular_value + 1e-10))

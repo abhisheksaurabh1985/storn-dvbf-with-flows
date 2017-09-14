@@ -26,16 +26,22 @@ def train_nf(sess, loss_op, loss_summary, prob_dists, solver, nepochs, n_samples
             batch_xs = data.train.next_batch(batch_size)
             # batch_xs = dataset_utils.normalize_data(batch_xs)  # Use z-score normalization
             # print "sum_logdetj", sum_logdetjames
-            _, cost, res_summary, probability_distributions, jacob_z_out, sldj = sess.run([solver, loss_op, summary, prob_dists, jacobian_z, sum_logdetjames],
-                                                                       feed_dict={_X: batch_xs})
-            # print jacob_z_out[np.nonzero(jacob_z_out > 1e-4)]
-            # print "======================================="
-            # print "sldj =", sldj
-            # print "jacob_z_out.shape: ", jacob_z_out.shape
-            # print jacob_z_out
-            # plt.spy(jacob_z_out[0, 0:50, 0:50], markersize=2)
-            # plt.show()
-            # print "======================================="
+            if flow_type == "ConvolutionPlanar":
+                _, cost, res_summary, probability_distributions, \
+                jacob_z_out, sldj = sess.run([solver, loss_op, summary,
+                                              prob_dists, jacobian_z, sum_logdetjames],
+                                              feed_dict={_X: batch_xs})
+                # print jacob_z_out[np.nonzero(jacob_z_out > 1e-4)]
+                # print "======================================="
+                # print "sldj =", sldj
+                # print "jacob_z_out.shape: ", jacob_z_out.shape
+                # print jacob_z_out
+                # plt.spy(jacob_z_out[0, 0:50, 0:50], markersize=2)
+                # plt.show()
+                # print "======================================="
+            else:
+                _, cost, res_summary, probability_distributions = sess.run([solver, loss_op, summary, prob_dists],
+                                                                           feed_dict={_X: batch_xs})
             recons_loss = cost[0]
             kl_loss = cost[1]
             elbo_loss = cost[2]

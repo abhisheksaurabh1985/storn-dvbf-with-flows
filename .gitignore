@@ -5,7 +5,7 @@
 
 # Ignore data directory
 tf_logs/
-pickled_data/
+# pickled_data/
 output/
 output_models/
 results_worth_saving/

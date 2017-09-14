@@ -18,7 +18,7 @@ import time
 import datetime
 import json
 import collections
-# import numpy as np
+import numpy as np
 
 import tensorflow as tf
 from tensorflow.python.framework import ops
@@ -39,8 +39,8 @@ n_latent_dim = 2
 HU_enc = 128
 HU_dec = 128
 mb_size = 20
-learning_rate = 1e-5  # For NF, PF and RF 0.0001 works well.
-training_epochs = 10000
+learning_rate = 1e-3  # For NF, PF and RF 0.0001 works well.
+training_epochs = 5
 display_step = 1
 mu_init = 0  # Params for random normal weight initialization
 sigma_init = 0.001  # Params for random normal weight initialization
@@ -50,10 +50,10 @@ activation_function = tf.nn.relu
 # logs_path = './tf_logs/'
 
 # Select flow type.
-flow_type = "ConvolutionPlanar"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
+flow_type = "Radial"  # "ConvolutionPlanar", "Planar", "Radial", "NoFlow"
 
 # Flow parameters
-numFlows = 4  # Number of times flow has to be applied.
+numFlows = 2  # Number of times flow has to be applied.
 apply_invertibility_condition = True
 beta = True
 
@@ -81,7 +81,13 @@ reconstruction_error_function = losses.loss_functions.negative_log_normal
 # Restore saved model
 restore_model = False
 # If restore_model is True, set path to the model to be restored. Ignore file name model.ckpt.
-fpath_restore_model = "./output/planar/2017_08_08_12_02_37/output_models/"
+# fpath_restore_model = "./output/no_flow/no_flow_2017_08_26_22_44_06/output_models/"  # No Flow
+# fpath_restore_model = "./output/planar/2017_08_29_11_30_56/output_models/"  # PF k=2
+# fpath_restore_model = "./output/planar/2017_08_29_13_51_44/output_models/"  # PF k=4
+# fpath_restore_model = "./output/planar/2017_08_27_11_47_32/output_models/"  # PF k=8
+# fpath_restore_model = "./output/radial/2017_08_30_23_27_26/output_models/"  # RF k=2
+# fpath_restore_model = "./output/radial/2017_08_31_10_36_48/output_models/"  # RF k=4
+fpath_restore_model = "./output/radial/2017_08_28_10_22_59/output_models/"  # RF k=8
 
 # Set up output model directory
 if flow_type == "Planar":
@@ -102,7 +108,7 @@ if flow_type == "Planar" or flow_type == "Radial" or flow_type == "NoFlow" or fl
     logs_path = './tf_logs/'
 
 # Optimizer
-optimizer = tf.train.AdagradOptimizer  # tf.train.AdamOptimizer
+optimizer = tf.train.AdamOptimizer  # tf.train.RMSPropOptimizer # tf.train.AdamOptimizer # tf.train.AdagradOptimizer
 
 # Normalize data
 normalize_data = False  # Always use False.
@@ -177,7 +183,9 @@ with open(os.path.join(output_dir, "logfile.log"), "a") as f:
 # Each mini-batch should have the shape: (ts, bs, num_features).
 # XU = pickle.load(open('./pickled_data/XU.pkl', "rb"))
 # shuffled_data = pickle.load(open('./pickled_data/shuffled_data.pkl', "rb"))
-datasets = pickle.load(open('./pickled_data/datasets.pkl', "rb"))
+
+# datasets = pickle.load(open('./pickled_data/datasets.pkl', "rb"))  # This one has all the 5 input features.
+datasets = pickle.load(open('./pickled_data/datasets_sans_av.pkl', "rb"))  # This one has all but angular velocity.
 
 # ENCODER
 X_dim = datasets.train.full_data.shape[2]  # Input data dimension
@@ -267,6 +275,7 @@ elif flow_type == "ConvolutionPlanar":
 elif flow_type == "NoFlow":
     z_k = z0
 
+
 # DECODER
 mu_x_recons, logvar_x_recons = nne.decoder_rnn(z_k, model_type, input_x=_X)  # Shape: (T,B,x_dim)
 var_x_recons = tf.exp(logvar_x_recons)
@@ -292,7 +301,14 @@ elif flow_type == "ConvolutionPlanar":
                                         z0=z0, zk=z_k, logdet_jacobian=sum_logdet_jacobian,
                                         decoder_mean=mu_x_recons, decoder_variance=var_x_recons)
     # The second element of the loss_op tuple is the elbo loss.
-    solver = optimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    # solver = optimizer(learning_rate).minimize(loss_op[2], global_step=global_step)
+    _optimizer = optimizer(learning_rate=learning_rate)
+    gradients, variables = zip(*_optimizer.compute_gradients(loss_op[2]))
+    # gradients, _ = tf.clip_by_global_norm(gradients, 2.0)
+    gradients = [
+        None if gradient is None else tf.clip_by_norm(gradient, 5.0)
+        for gradient in gradients]
+    solver = _optimizer.apply_gradients(zip(gradients, variables))
 elif flow_type == "Radial":
     global_step = tf.Variable(0, trainable=False)
     loss_op, summary_losses, probability_distributions = \
@@ -362,6 +378,22 @@ if not restore_model:
 else:
     saver.restore(sess, os.path.join(fpath_restore_model, 'model.ckpt'))
 
+
+test_recons_loss = []
+test_kl_loss = []
+test_elbo_loss = []
+for batch_i in range(200 / mb_size):
+    start = batch_i * mb_size
+    end = (batch_i + 1) * mb_size
+    test_cost = sess.run(loss_op, feed_dict={_X: datasets.test.full_data[:, start:end, :]})
+    test_recons_loss.append(test_cost[0])
+    test_kl_loss.append(test_cost[1])
+    test_elbo_loss.append(test_cost[2])
+
+print "test_recons_loss", np.mean(test_recons_loss) / 50 * 40,\
+    "test_kl_loss", np.mean(test_kl_loss) / 50 * 40,\
+    "test_elbo_loss", np.mean(test_elbo_loss) / 50 * 40
+
 # RECONSTRUCTION
 x_sample = datasets.train.next_batch(mb_size)
 if normalize_data:
@@ -373,6 +405,21 @@ print "x_sample.shape", x_sample.shape
 # print "latent sample shape", latent_for_x_sample.shape
 
 x_reconstructed = nne.reconstruct(sess, _X, x_sample)
+
+x_for_latent_plot = []
+z_latent = []
+for batch_i in range(800 / mb_size):
+    start = batch_i * mb_size
+    end = (batch_i + 1) * mb_size
+    x_for_latent_plot.append(datasets.train.full_data[:, start:end, :])
+    z_batch = sess.run(z_k, feed_dict={_X: datasets.train.full_data[:, start:end, :]})
+    z_latent.append(z_batch)
+z_latent = np.concatenate(z_latent, 1)
+x_for_latent_plot = np.concatenate(x_for_latent_plot, 1)
+print "z_latent shape", z_latent.shape
+print "x_for_latent_plot shape", x_for_latent_plot.shape
+pickle.dump(z_latent, open(os.path.join(dir_saved_variables, 'z_latent.pickle'), "wb"))
+pickle.dump(x_for_latent_plot, open(os.path.join(dir_saved_variables, 'x_for_latent_plot.pickle'), "wb"))
 print "x_reconstructed type", type(x_reconstructed)
 print "x_reconstructed shape", x_reconstructed.shape
 

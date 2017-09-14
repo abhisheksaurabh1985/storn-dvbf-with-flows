@@ -1,3 +1,10 @@
+*TODO*
+-  In execute.py clip the gradient by norm and not by value. Use LR=1e-5.
+-  In PF, the jacobian contracts the volume. Whereas in RF, it expands.
+-  Large KL loss due to more no of latent variables. 
+-  Remove velocity and repeat the experiments.  
+-  Plot the 2D latent space. 
+
 *Results needed*
 - Comparison of all models for a single value of flow say `numFlows=4`. NoFlow, Planar, Radial, Convolution. ETA 24 
 hours each. Total time 4 days. 
@@ -110,3 +117,13 @@ in the latent space.
 generative samples and latent space.  
 - Section on Convolution Planar, Interpretation, Figure of the Jacobian matrix, reason why it failed or why was it 
 expected to work in the first place. 
+
+
+*Test Losses*
+NF: test_recons_loss -12.153049469 test_kl_loss 0.0434563696384 test_elbo_loss -12.1095932007
+PF-2: test_recons_loss -10.7982299805 test_kl_loss 5.38380432129 test_elbo_loss -5.41442642212
+PF-4: test_recons_loss -10.1646568298 test_kl_loss 4.7861076355 test_elbo_loss -5.37854995728
+PF-8: test_recons_loss -11.4902694702 test_kl_loss 5.29898872375 test_elbo_loss -6.19128112793
+RF-2: test_recons_loss -11.2881004333 test_kl_loss 5.34240951538 test_elbo_loss -5.94569091797
+RF-4: test_recons_loss -12.6667442322 test_kl_loss 5.34301643372 test_elbo_loss -7.32372817993
+RF-8: test_recons_loss -11.5638534546 test_kl_loss 5.30038337708 test_elbo_loss -6.26347045898

@@ -155,7 +155,7 @@ if __name__ == '__main__':
     # Specify start and end epochs for the graph
     nepochs = 10000
     start_epoch = 4000
-    end_epoch = 90000
+    end_epoch = 9000
 
     # Read log files
     pf_2_pdists = read_pdists_logfile(pf_2_pdists_logfile_path)
